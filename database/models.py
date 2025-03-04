@@ -45,12 +45,21 @@ async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# Функция для создания таблицы, если её нет
+# Функция для проверки существования таблицы и её создания
 async def create_table():
-    # Создаем таблицу только если она не существует
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("Таблица успешно создана!")
+    try:
+        # Создание таблицы только если она не существует
+        async with engine.begin() as conn:
+            result = await conn.execute("SELECT to_regclass('public.products');")
+            table_exists = result.scalar() is not None
+
+            if not table_exists:
+                await conn.run_sync(Base.metadata.create_all)
+                print("Таблица успешно создана!")
+            else:
+                print("Таблица уже существует.")
+    except Exception as e:
+        print(f"Произошла ошибка при работе с базой данных: {e}")
 
 # Пример асинхронной работы с базой
 async def main():
