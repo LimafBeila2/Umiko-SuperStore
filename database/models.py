@@ -4,9 +4,19 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.engine import reflection
 from datetime import datetime
+import os
+
+
+# Установите переменные окружения
+PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
+PGPORT = os.getenv('PGPORT', '5432')
+PGUSER = os.getenv('PGUSER', 'postgres')
+PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
+PGDATABASE = os.getenv('PGDATABASE', 'railway')
+
 
 # Настройки базы данных PostgreSQL
-DATABASE_URL = "postgresql+asyncpg://postgres:ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI@postgres.railway.internal:5432/railway"
+DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 # Создаем базовый класс для таблиц
 Base = declarative_base()
