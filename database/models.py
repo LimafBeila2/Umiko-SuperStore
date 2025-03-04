@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 from dotenv import load_dotenv  # Для загрузки переменных из .env файла
+from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy import BigInteger, String, DateTime, Column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-# Загружаем переменные окружения из .env файла
-load_dotenv()
-
-# Получаем строку подключения из переменных окружения
+# Установите переменные окружения
 PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
 PGPORT = os.getenv('PGPORT', '5432')
 PGUSER = os.getenv('PGUSER', 'postgres')
@@ -19,14 +19,15 @@ PGDATABASE = os.getenv('PGDATABASE', 'railway')
 # Формирование строки подключения
 DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
-# Выводим переменные для проверки
-print(f"PGHOST: {PGHOST}")
-print(f"PGPORT: {PGPORT}")
-print(f"PGUSER: {PGUSER}")
-print(f"PGDATABASE: {PGDATABASE}")
+# Создание двигателя и сессии
+engine = create_async_engine(DATABASE_URL)
 
-# Создаем базовый класс для таблиц
-Base = declarative_base()
+async_session = async_sessionmaker(engine)
+
+
+# Базовый класс для моделей
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
 
 # Определяем модель таблицы для товаров
 class Product(Base):
@@ -45,21 +46,12 @@ async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# Функция для проверки существования таблицы и её создания
+# Функция для создания таблицы, если её нет
 async def create_table():
-    try:
-        # Создание таблицы только если она не существует
-        async with engine.begin() as conn:
-            result = await conn.execute("SELECT to_regclass('public.products');")
-            table_exists = result.scalar() is not None
-
-            if not table_exists:
-                await conn.run_sync(Base.metadata.create_all)
-                print("Таблица успешно создана!")
-            else:
-                print("Таблица уже существует.")
-    except Exception as e:
-        print(f"Произошла ошибка при работе с базой данных: {e}")
+    # Создаем таблицу только если она не существует
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("Таблица успешно создана!")
 
 # Пример асинхронной работы с базой
 async def main():
