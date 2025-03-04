@@ -1,23 +1,30 @@
 import asyncio
+import os
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-import os
+from dotenv import load_dotenv  # Для загрузки переменных из .env файла
 
-# Получаем строку подключения из переменной окружения
-DATABASE_URL = os.getenv('Postgres_DATABASE_URL')
+# Загружаем переменные окружения из .env файла
+load_dotenv()
 
-# Если строка подключения не найдена, можно подставить дефолтные значения
-if DATABASE_URL is None:
-    PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
-    PGPORT = os.getenv('PGPORT', '5432')
-    PGUSER = os.getenv('PGUSER', 'postgres')
-    PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
-    PGDATABASE = os.getenv('PGDATABASE', 'railway')
-    
-    DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+# Получаем строку подключения из переменных окружения
+PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
+PGPORT = os.getenv('PGPORT', '5432')
+PGUSER = os.getenv('PGUSER', 'postgres')
+PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
+PGDATABASE = os.getenv('PGDATABASE', 'railway')
+
+# Формирование строки подключения
+DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+
+# Выводим переменные для проверки
+print(f"PGHOST: {PGHOST}")
+print(f"PGPORT: {PGPORT}")
+print(f"PGUSER: {PGUSER}")
+print(f"PGDATABASE: {PGDATABASE}")
+
 # Создаем базовый класс для таблиц
 Base = declarative_base()
 
@@ -40,7 +47,7 @@ async_session = sessionmaker(
 
 # Функция для проверки наличия таблицы и создания её, если нужно
 async def create_table():
-    async with engine.begin() as conn:
+    async with engine.connect() as conn:
         # Проверка, существует ли таблица
         result = await conn.execute("SELECT to_regclass('public.products');")
         table_exists = result.scalar() is not None
