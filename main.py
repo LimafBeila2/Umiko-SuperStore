@@ -29,6 +29,7 @@ driver = webdriver.Chrome(service=service, options=options)
 #Функция для входа в аккаунт Umico Business с использованием данных из .env
 def login_to_umico(driver):
     load_dotenv()
+
     username = os.getenv("UMICO_USERNAME")
     password = os.getenv("UMICO_PASSWORD")
 
