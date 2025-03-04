@@ -6,16 +6,18 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import os
 
-# Установите переменные окружения
-PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
-PGPORT = os.getenv('PGPORT', '5432')
-PGUSER = os.getenv('PGUSER', 'postgres')
-PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
-PGDATABASE = os.getenv('PGDATABASE', 'railway')
+# Получаем строку подключения из переменной окружения
+DATABASE_URL = os.getenv('Postgres_DATABASE_URL')
 
-# Формирование строки подключения
-DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
-
+# Если строка подключения не найдена, можно подставить дефолтные значения
+if DATABASE_URL is None:
+    PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
+    PGPORT = os.getenv('PGPORT', '5432')
+    PGUSER = os.getenv('PGUSER', 'postgres')
+    PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
+    PGDATABASE = os.getenv('PGDATABASE', 'railway')
+    
+    DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 # Создаем базовый класс для таблиц
 Base = declarative_base()
 
