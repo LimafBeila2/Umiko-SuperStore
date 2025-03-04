@@ -6,7 +6,7 @@ from sqlalchemy.engine import reflection
 from datetime import datetime
 
 # Настройки базы данных PostgreSQL
-DATABASE_URL = "postgresql+asyncpg://postgres:ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI@postgres.railway.internal:5432/railway"  # Используем PostgreSQL
+DATABASE_URL = "postgresql+asyncpg://postgres:ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI@postgres.railway.internal:5432/railway"
 
 # Создаем базовый класс для таблиц
 Base = declarative_base()
