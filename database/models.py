@@ -5,8 +5,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.engine import reflection
 from datetime import datetime
 
-# Настройки базы данных
-DATABASE_URL = "sqlite+aiosqlite:///./products.db"  # Используем SQLite с асинхронной поддержкой
+# Настройки базы данных PostgreSQL
+DATABASE_URL = "postgresql+asyncpg://postgres:ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI@postgres.railway.internal:5432/railway"  # Используем PostgreSQL
 
 # Создаем базовый класс для таблиц
 Base = declarative_base()
@@ -22,7 +22,7 @@ class Product(Base):
     last_checked_price = Column(Float)
     last_checked = Column(DateTime, default=datetime.utcnow)
 
-# Создаем асинхронный движок и сессию
+# Создаем асинхронный движок и сессию для PostgreSQL
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
