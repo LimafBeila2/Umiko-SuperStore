@@ -13,7 +13,7 @@ load_dotenv()
 PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
 PGPORT = os.getenv('PGPORT', '5432')
 PGUSER = os.getenv('PGUSER', 'postgres')
-PGPASSWORD = os.getenv('PGPASSWORD', 'TvqEqqIEIMZPFqEmIqgSgjoqQPwqzhfu')
+PGPASSWORD = os.getenv('PGPASSWORD', 'xRaUWyniDrKbOcbJGTFLcgiZTYEDfAck')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
 # Формирование строки подключения
