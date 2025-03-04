@@ -222,8 +222,12 @@ if __name__ == "__main__":
         # Входим в Umico Business
         login_to_umico(driver)
 
-        # Переходим по ссылкам товаров и выполняем парсинг
-        asyncio.run(visit_products(driver))
+        # Создаём и запускаем цикл событий
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(visit_products(driver))
+
+    except Exception as e:
+        print(f"Ошибка в основном потоке: {e}")
 
     finally:
         driver.quit()
