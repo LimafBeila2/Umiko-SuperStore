@@ -17,7 +17,7 @@ PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
 # Формирование строки подключения
-DATABASE_URL = f"postgresql+asyncpg://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('POSTGRES_DB')}"
+DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 # Выводим переменные для проверки
 print(f"PGHOST: {PGHOST}")
@@ -47,17 +47,18 @@ async_session = sessionmaker(
 
 # Функция для проверки наличия таблицы и создания её, если нужно
 async def create_table():
-    async with engine.connect() as conn:
-        # Проверка, существует ли таблица
-        result = await conn.execute("SELECT to_regclass('public.products');")
-        table_exists = result.scalar() is not None
+    async with async_session() as session:
+        async with session.begin():
+            # Проверка, существует ли таблица
+            result = await session.execute("SELECT to_regclass('public.products');")
+            table_exists = result.scalar() is not None
 
-        if not table_exists:
-            # Если таблицы нет, создаем её
-            await conn.run_sync(Base.metadata.create_all)
-            print("Таблица успешно создана!")
-        else:
-            print("Таблица уже существует.")
+            if not table_exists:
+                # Если таблицы нет, создаем её
+                await session.run_sync(Base.metadata.create_all)
+                print("Таблица успешно создана!")
+            else:
+                print("Таблица уже существует.")
 
 # Пример асинхронной работы с базой
 async def main():
