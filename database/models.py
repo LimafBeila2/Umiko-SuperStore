@@ -1,11 +1,10 @@
 import asyncio
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.engine import reflection
+from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import os
-
 
 # Установите переменные окружения
 PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
@@ -14,8 +13,7 @@ PGUSER = os.getenv('PGUSER', 'postgres')
 PGPASSWORD = os.getenv('PGPASSWORD', 'ilJVkITTuilDrVCNGqBaTzaMRMxhwOuI')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
-
-# Настройки базы данных PostgreSQL
+# Формирование строки подключения
 DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 # Создаем базовый класс для таблиц
@@ -38,13 +36,15 @@ async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# Функция для проверки наличия таблицы и создания ее, если нужно
+# Функция для проверки наличия таблицы и создания её, если нужно
 async def create_table():
-    # Подключаемся к базе и проверяем наличие таблицы
-    async with engine.connect() as conn:
-        insp = reflection.Inspector.from_engine(conn)
-        if 'products' not in insp.get_table_names():
-            # Если таблицы нет, создаем
+    async with engine.begin() as conn:
+        # Проверка, существует ли таблица
+        result = await conn.execute("SELECT to_regclass('public.products');")
+        table_exists = result.scalar() is not None
+
+        if not table_exists:
+            # Если таблицы нет, создаем её
             await conn.run_sync(Base.metadata.create_all)
             print("Таблица успешно создана!")
         else:
