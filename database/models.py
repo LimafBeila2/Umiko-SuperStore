@@ -10,9 +10,9 @@ from dotenv import load_dotenv  # Для загрузки переменных �
 load_dotenv()
 
 # Переменные окружения для подключения к PostgreSQL
-PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')
-PGPORT = os.getenv('PGPORT', '5432')
+PGHOST = os.getenv('RAILWAY_TCP_PROXY_DOMAIN', 'your-public-domain.railway.app')
 PGUSER = os.getenv('PGUSER', 'postgres')
+PGPORT = os.getenv('RAILWAY_TCP_PROXY_PORT', '5432')
 PGPASSWORD = os.getenv('PGPASSWORD', 'xRaUWyniDrKbOcbJGTFLcgiZTYEDfAck')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
