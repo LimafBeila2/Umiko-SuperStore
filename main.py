@@ -34,15 +34,8 @@ def create_driver():
 
 # Функция загрузки JSON
 def load_json(filename):
-    try:
-        with open(filename, "r", encoding="utf-8") as file:
-            data = json.load(file)
-            if not data:
-                raise ValueError(f"JSON файл {filename} пустой!")
-            return data
-    except json.JSONDecodeError:
-        logging.error(f"Ошибка при декодировании JSON из файла {filename}")
-        raise
+    with open(filename, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -75,13 +68,13 @@ def login_to_umico(driver):
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
-        # Обработаем город, если есть такая опция
-        WebDriverWait(driver, 30).until(
+        baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
-        ).click()
+        )
+        baku_option.click()
         logging.info("Город Баку выбран.")
-    except Exception as e:
-        logging.info(f"Окно выбора города не появилось или ошибка: {e}")
+    except:
+        logging.info("Окно выбора города не появилось.")
 
 # Функция обработки товаров
 def process_product(product):
