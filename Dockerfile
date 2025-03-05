@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     libatk1.0-0 \
     libgbm1 \
     xdg-utils \
+    libnss3 \
+    libnspr4 \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
@@ -29,6 +31,9 @@ COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Устанавливаем права на выполнение для chromedriver (если требуется)
+RUN chmod +x /root/.wdm/drivers/chromedriver/linux64/114.0.5735.90/chromedriver
 
 # Указываем рабочую директорию
 WORKDIR /app
