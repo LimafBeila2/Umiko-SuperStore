@@ -106,12 +106,14 @@ def process_product(driver, product_url, edit_url):
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
                 price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
-                price = float(price_text.replace("₼", "").strip())
-
-                if not price_text:
+                
+                # Убираем символы валюты и пробелы перед преобразованием
+                price_text_cleaned = price_text.replace("₼", "").strip()
+                
+                if not price_text_cleaned:
                     continue
                 
-                price = float(price_text)
+                price = float(price_text_cleaned)
                 
                 if merchant == "Super Store":
                     super_store_price = price
@@ -154,7 +156,7 @@ def process_product(driver, product_url, edit_url):
 
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
-    products = load_json("product.json")
+    products = load_json(json_file)
     for product in products:
         process_product(driver, product["product_url"], product["edit_url"])
 
