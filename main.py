@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Путь к chromedriver
-chromedriver_path = r"C:/Users/Famka/.vscode/selenium/chromedriver/chromedriver.exe"
+chromedriver_path = r"C:/Users/Famka/vscode/selenium/chromedriver/chromedriver.exe"
 
 # Путь к Chrome (если установлен в стандартном месте, или укажите свой путь)
 chrome_path = r"C:/Program Files/Google/Chrome/Application/chrome.exe"  # Убедитесь, что путь правильный
