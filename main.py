@@ -135,55 +135,47 @@ def process_product(driver, product_url, edit_url):
             driver.get(edit_url)
             sleep(5)
             
-            discount_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-            )
+            # Проверяем и ставим галочку на скидку, если нужно
+            try:
+                # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
+                discount_checkbox = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
+                    ))
+                )
+
+                # Если галочка не установлена, ставим её
+                if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                    discount_checkbox.click()
+                    logging.info("Галочка на скидку поставлена.")
+
+                # Ждем появления поля для ввода скидочной цены (на двух языках)
+                discount_input = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
+                    ))
+                )
+
+                # Устанавливаем новую цену
+                discount_input.clear()
+                discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+
+                # Нажимаем на кнопку "Готово" или "Hazır"
+                save_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                )
+                sleep(2)
+                save_button.click()
+                logging.info("Цена обновлена!")
+                sleep(10)
+            except Exception as e:
+                logging.error(f"Ошибка при установке скидочной цены: {e}")
             
-            new_price = round(lowest_price - 0.01, 2)
-            discount_input.clear()
-            discount_input.send_keys(str(new_price))
-            logging.info(f"Новая цена: {new_price} ₼")
-            
-            save_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-            )
-            sleep(2)
-            save_button.click()
-            logging.info("Цена обновлена!")
-            sleep(10)
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара {product_url}: {e}")
-
-# Функция для установки скидки
-def toggle_discount_checkbox_and_set_price(driver, new_price):
-    try:
-        # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
-        discount_checkbox = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((
-                By.XPATH, 
-                "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-            ))
-        )
-
-        # Если галочка не установлена, ставим её
-        if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-            discount_checkbox.click()
-            logging.info("Галочка на скидку поставлена.")
-
-        # Ждем появления поля для ввода скидочной цены (на двух языках)
-        discount_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((
-                By.XPATH, 
-                "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-            ))
-        )
-
-        # Устанавливаем новую цену
-        discount_input.clear()
-        discount_input.send_keys(str(new_price))
-        logging.info(f"Установлена скидочная цена: {new_price} ₼")
-    except Exception as e:
-        logging.error(f"Ошибка при установке скидочной цены: {e}")
 
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
