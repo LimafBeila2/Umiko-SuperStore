@@ -185,7 +185,7 @@ def delayed_submit(executor, product, delay):
 def process_products_from_json(json_file):
     products = load_json(json_file)
     
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [delayed_submit(executor, product, i * 5) for i, product in enumerate(products)]
         
         for future in as_completed(futures):  # Ожидание выполнения всех задач
