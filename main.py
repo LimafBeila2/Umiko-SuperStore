@@ -72,7 +72,10 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция для проверки самой низкой цены и изменения цены, если нужно
-def check_and_update_price(driver, product_url, edit_url):
+def check_and_update_price(driver, product_url, edit_url, login_needed=False):
+    if login_needed:
+        login_to_umico(driver)  # Авторизация, если требуется
+
     driver.get(product_url)
     sleep(2)
     close_ad(driver)
@@ -153,22 +156,20 @@ def check_and_update_price(driver, product_url, edit_url):
             sleep(10)
         except Exception as e:
             logging.error(f"Ошибка при установке скидочной цены: {e}")
-            
+
 # Функция обработки одного товара
 def process_product(q):
     driver = create_driver()
     try:
-        login_to_umico(driver)
-
         while not q.empty():
             product = q.get()
-            product_url, edit_url = product["product_url"], product["edit_url"]
+            product_url, edit_url, login_needed = product["product_url"], product["edit_url"], product.get("login_needed", False)
             logging.info(f"Обрабатываем товар: {product_url}")
-            check_and_update_price(driver, product_url, edit_url)
+            check_and_update_price(driver, product_url, edit_url, login_needed)
 
             while True:
                 logging.info(f"Проверяем цену товара {product_url} каждую минуту...")
-                check_and_update_price(driver, product_url, edit_url)
+                check_and_update_price(driver, product_url, edit_url, login_needed)
                 sleep(60)
             q.task_done()
     except Exception as e:
