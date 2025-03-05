@@ -72,7 +72,8 @@ def login_to_umico(driver, current_url):
 
     else:
         logging.info("Страница не требует авторизации. Продолжаем работу.")
-        return driver  # Возвращаем драйвер, если авторизация не нужна
+    
+    return driver  # Возвращаем драйвер, если авторизация не нужна
     
 # Функция для закрытия рекламы
 def close_ad(driver):
