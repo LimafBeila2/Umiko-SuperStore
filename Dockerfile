@@ -5,22 +5,26 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y \
     libxss1 \
     libappindicator3-1 \
-    libindicator7 \
     fonts-liberation \
     libu2f-udev \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
     libgbm1 \
     xdg-utils \
-    --no-install-recommends
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
-# Устанавливаем pip и зависимости из requirements.txt
+# Устанавливаем pip и создаем виртуальное окружение
 RUN python -m venv /opt/venv
-RUN . /opt/venv/bin/activate && pip install --upgrade pip
-COPY requirements.txt /app/requirements.txt
-RUN . /opt/venv/bin/activate && pip install -r /app/requirements.txt
 
-# Копируем приложение в контейнер
+# Обновляем pip в виртуальном окружении
+RUN /opt/venv/bin/pip install --upgrade pip
+
+# Копируем requirements.txt и устанавливаем зависимости
+COPY requirements.txt /app/requirements.txt
+RUN /opt/venv/bin/pip install -r /app/requirements.txt
+
+# Копируем все файлы приложения в контейнер
 COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
@@ -29,5 +33,5 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Указываем рабочую директорию
 WORKDIR /app
 
-# Запускаем ваше приложение
+# Запускаем приложение
 CMD ["python", "main.py"]
