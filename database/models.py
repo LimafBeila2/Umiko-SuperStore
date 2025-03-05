@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, async_sessio
 from sqlalchemy.orm import DeclarativeBase
 from dotenv import load_dotenv  # Для загрузки переменных из .env файла
 
-# Загружаем переменные окружения из .env файл
+# Загружаем переменные окружения из .env файла
 load_dotenv()
 
 # Установите переменные окружения
@@ -59,21 +59,30 @@ async def create_table():
         # Дополнительная диагностика:
         print("Проверьте, существует ли база данных и корректны ли права доступа.")
 
+# Функция для добавления товара в базу данных
+async def add_product(product_data):
+    async with async_session() as session:
+        # Добавляем новый продукт в таблицу
+        product = Product(**product_data)
+        session.add(product)  # Добавляем объект в сессию
+        await session.commit()  # Сохраняем в базу данных
+        print(f"Продукт добавлен: {product.product_url}")
+
 # Асинхронный запуск
 async def main():
     await create_table()  # Создание таблицы перед выполнением запросов
-    # Вставка данных в таблицу (например)
-    async with async_session() as session:
-        product = Product(
-            product_url="https://example.com/product/1",
-            edit_url="https://example.com/edit/1",
-            current_price=100.0,
-            last_checked_price=100.0,
-            last_checked=datetime.utcnow()
-        )
-        session.add(product)  # Добавляем объект в сессию
-        await session.commit()  # Сохраняем в базу данных
-    print("Данные успешно добавлены в таблицу!")
+
+    # Пример данных для добавления в таблицу
+    product_data = {
+        "product_url": "https://example.com/product/1",
+        "edit_url": "https://example.com/edit/1",
+        "current_price": 100.0,
+        "last_checked_price": 100.0,
+        "last_checked": datetime.utcnow()
+    }
+
+    # Добавляем продукт в таблицу
+    await add_product(product_data)
 
 if __name__ == "__main__":
     try:
