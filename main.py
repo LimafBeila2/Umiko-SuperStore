@@ -153,14 +153,14 @@ def process_product(driver, product_url, edit_url):
 
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
-    products = load_json(json_file)
+    products = load_json("product.json")
     for product in products:
         process_product(driver, product["product_url"], product["edit_url"])
 
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        load_json("product.json")
+        process_products_from_json("product.json")
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
