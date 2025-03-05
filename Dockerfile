@@ -1,7 +1,7 @@
 # Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем bash и зависимости для работы с Chrome
+# Устанавливаем bash и зависимости для работы с Chrome и ChromeDriver
 RUN apt-get update && apt-get install -y \
     bash \
     libxss1 \
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     chromium \
+    chromium-driver \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 

@@ -19,17 +19,16 @@ from selenium.common.exceptions import TimeoutException
 
 # Настройки Chrome
 options = Options()
-options.binary_location = "/usr/bin/chromium"  # Указываем путь к Chromium в Docker
-options.add_argument("--disable-blink-features=AutomationControlled")  # Отключение признаков автоматизации
-options.add_argument("--headless")  # Запуск без графического интерфейса
-options.add_argument("--no-sandbox")  # Обязательно для контейнеров
-options.add_argument("--disable-dev-shm-usage")  # Устранение проблем с памятью
-options.add_argument("--window-size=1920x1080")  # Размер окна в headless-режиме
+options.binary_location = "/usr/bin/chromium"
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--window-size=1920x1080")
 
-# Автоустановка ChromeDriver
-service = Service(ChromeDriverManager().install())
+# Используем системный chromedriver
+service = Service("/usr/bin/chromedriver")
 
-# Создание экземпляра драйвера
+# Создаем веб-драйвер
 driver = webdriver.Chrome(service=service, options=options)
 
 # Функция для входа в аккаунт Umico Business с использованием данных из .env
