@@ -17,9 +17,11 @@ PGPASSWORD = os.getenv('PGPASSWORD', 'OkkimJRMrGzuTeFcvASGMADvOghkZNte')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
 # Формирование строки подключения
-DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+load_dotenv()
 
+DATABASE_URL = f"postgresql+asyncpg://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
 # Выводим переменные для проверки
+
 print("PGHOST:", PGHOST)
 print("PGUSER:", PGUSER)
 print("PGPASSWORD:", PGPASSWORD)
