@@ -17,7 +17,7 @@ PGPASSWORD = os.getenv('PGPASSWORD', 'OkkimJRMrGzuTeFcvASGMADvOghkZNte')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
 # Формирование строки подключения
-DATABASE_URL = f"postgresql+asyncpg://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
+DATABASE_URL = f"postgresql+asyncpg://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 # Выводим переменные для проверки
 print("PGHOST:", PGHOST)
@@ -47,48 +47,33 @@ class Product(Base):
     last_checked_price = Column(Float)
     last_checked = Column(DateTime, default=datetime.utcnow)
 
-# Функция для проверки соединения с базой данных
-async def test_connection():
-    try:
-        async with engine.connect() as conn:
-            result = await conn.execute("SELECT 1")
-            print("Соединение с базой данных установлено успешно!")
-    except Exception as e:
-        print(f"Ошибка при подключении: {e}")
-
 # Функция для создания таблицы с обработкой ошибок
 async def create_table():
     try:
-        # Проверяем соединение с базой данных
-        await test_connection()
-
         # Проверяем соединение с базой данных и создаем таблицу
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)  # Создаёт все таблицы
         print("Таблица успешно создана!")
-
-        # Вставляем данные в таблицу
-        async with async_session() as session:
-            # Создание объекта товара с данными
-            product = Product(
-                id=339754,
-                product_url="https://umico.az/product/339754-qadinlar-uchun-tualet-suyu-bvlgari-omnia-coral-65-ml",
-                edit_url="https://business.umico.az/account/products/my/2576516",
-                current_price=1.0,
-                last_checked_price=1.0,
-                last_checked=datetime(2025, 3, 5, 19, 39, 14)
-            )
-            session.add(product)  # Добавляем объект в сессию
-            await session.commit()  # Сохраняем в базу данных
-        print("Данные успешно добавлены в таблицу!")
     except Exception as e:
-        print(f"Ошибка при создании таблицы или вставке данных: {e}")
+        print(f"Ошибка при создании таблицы: {e}")
         # Дополнительная диагностика:
         print("Проверьте, существует ли база данных и корректны ли права доступа.")
 
 # Асинхронный запуск
 async def main():
-    await create_table()
+    await create_table()  # Создание таблицы перед выполнением запросов
+    # Вставка данных в таблицу (например)
+    async with async_session() as session:
+        product = Product(
+            product_url="https://example.com/product/1",
+            edit_url="https://example.com/edit/1",
+            current_price=100.0,
+            last_checked_price=100.0,
+            last_checked=datetime.utcnow()
+        )
+        session.add(product)  # Добавляем объект в сессию
+        await session.commit()  # Сохраняем в базу данных
+    print("Данные успешно добавлены в таблицу!")
 
 if __name__ == "__main__":
     try:
