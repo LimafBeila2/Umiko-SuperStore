@@ -131,25 +131,19 @@ def process_product(product):
             
             try:
                 discount_checkbox = WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((
-                        By.XPATH, 
-                        "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-                    ))
+                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                 )
                 if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
                     discount_checkbox.click()
                     logging.info("Галочка на скидку поставлена.")
                 discount_input = WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((
-                        By.XPATH, 
-                        "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-                    ))
+                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                 )
                 discount_input.clear()
                 discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
                 logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
                 save_button = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable(By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']")
+                    EC.element_to_be_clickable(By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
                 )
                 sleep(2)
                 save_button.click()
