@@ -72,7 +72,7 @@ async def get_product_urls():
 async def close_ad(driver):
     try:
         baku_option = WebDriverWait(driver , 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку']"))
+            EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
         baku_option.click()
         print("Город Баку выбран.")
@@ -80,15 +80,16 @@ async def close_ad(driver):
         print("Окно выбора города не появилось, продолжаем выполнение кода.")
 
 
-#Функция для клика по элементу с указанным текстом
-def click_element_by_text(text):
-    element = driver.find_element(By.XPATH, f"//a[contains(text(), '{text}')]")
+
+def click_element_by_text(text1, text2):
+    # Используем XPath с условием "или" для поиска обоих текстов
+    element = driver.find_element(By.XPATH, f"//a[contains(text(), '{text1}') or contains(text(), '{text2}')]")
     actions = ActionChains(driver)
     actions.move_to_element(element).perform()
     element.click()
 
 
-#Основная функция для обработки каждого товара
+# Основная функция для обработки каждого товара
 async def process_product(driver, product):
     try:
         # Извлекаем данные из product (кортеж, а не объект Product)
@@ -101,11 +102,14 @@ async def process_product(driver, product):
         # Закрытие рекламы
         await close_ad(driver)
 
-        # Кликаем по ссылке "Посмотреть цены всех продавцов"
-        click_element_by_text("Посмотреть цены всех продавцов")
+        # Кликаем по ссылке "Посмотреть цены всех продавцов" на разных языках
+        click_element_by_text("Bütün satıcıların qiymətlərinə baxmaq", "Посмотреть цены всех продавцов")
 
         # Ожидаем загрузки блока с товарами
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer")))
+        
+    except Exception as e:
+        print(f"Ошибка при обработке товара: {product_url}: {e}")
 
         # Находим все блоки товаров
         product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
@@ -184,7 +188,7 @@ async def process_product(driver, product):
                             endirim_checkbox.click()
 
                         discount_price_input = WebDriverWait(driver, 20).until(
-                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена']"))
+                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                         )
 
                         # Вводим новую цену, уменьшенную на 1 копейку
@@ -197,7 +201,7 @@ async def process_product(driver, product):
                         # Ожидаем, что кнопка "Готово" станет доступной
                         save_button = WebDriverWait(driver, 30).until(
                             EC.element_to_be_clickable(
-                                (By.XPATH, "//button[span[text()='Готово']]")
+                                (By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
                             )
                         )
                         sleep(2)
