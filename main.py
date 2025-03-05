@@ -14,17 +14,21 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
+chromedriver_path = "C:/path/to/chromedriver.exe"
 
-# Настройки Chrome
-def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920x1080")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
+
+# Опции для браузера Chrome
+options = Options()
+options.binary_location = chrome_path  # Устанавливаем путь к Chrome
+options.add_argument("--headless")  # Работать без GUI
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
+# Создание сервиса и драйвера
+service = Service(chromedriver_path)
+driver = webdriver.Chrome(service=service, options=options)
+
 
 # Функция загрузки JSON
 def load_json(filename):

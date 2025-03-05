@@ -35,9 +35,14 @@ COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
+ENV DISPLAY=:99
 
 # Указываем рабочую директорию
 WORKDIR /app
+
+# Указываем путь к браузеру и chromedriver
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Запускаем приложение
 CMD ["python", "main.py"]
