@@ -47,7 +47,7 @@ def login_to_umico(driver):
     driver.get("https://business.umico.az/sign-in")
 
     # Ввод логина и пароля
-    login_input = WebDriverWait(driver, 30).until(
+    login_input = WebDriverWait(driver, 40).until(
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
     login_input.send_keys(username)
@@ -57,7 +57,7 @@ def login_to_umico(driver):
     password_input.send_keys(Keys.RETURN)
 
     try:
-        WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
+        WebDriverWait(driver, 40).until(EC.url_contains("/account/orders"))
         print("Успешный вход в Umico Business! Вы находитесь на странице заказов.")
     except Exception as e:
         print(f"Ошибка входа: {e}")
@@ -78,7 +78,7 @@ async def get_product_urls():
 # Функция для закрытия рекламы на странице
 async def close_ad(driver):
     try:
-        baku_option = WebDriverWait(driver, 5).until(
+        baku_option = WebDriverWait(driver, 40).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
         baku_option.click()
@@ -87,7 +87,7 @@ async def close_ad(driver):
         print("Окно выбора города не появилось, продолжаем выполнение кода.")
 
 
-def click_element_by_text(driver, text1, text2):
+def click_element_by_text(text1, text2):
     # Используем XPath с условием "или" для поиска обоих текстов
     element = driver.find_element(By.XPATH, f"//a[contains(text(), '{text1}') or contains(text(), '{text2}')]")
     actions = ActionChains(driver)
@@ -131,10 +131,10 @@ async def process_product(driver, product):
         await close_ad(driver)
 
         # Кликаем по ссылке "Посмотреть цены всех продавцов" на разных языках
-        click_element_by_text(driver, "Bütün satıcıların qiymətlərinə baxmaq", "Посмотреть цены всех продавцов")
+        click_element_by_text("Bütün satıcıların qiymətlərinə baxmaq", "Посмотреть цены всех продавцов")
 
         # Ожидаем загрузки блока с товарами
-        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer")))
+        WebDriverWait(driver, 40).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer")))
 
     except Exception as e:
         print(f"Ошибка при обработке товара: {product_url}: {e}")
@@ -201,7 +201,7 @@ async def process_product(driver, product):
                         await asyncio.sleep(5)
 
                         # Ожидаем, что появится элемент с чекбоксом "Скидка"
-                        endirim_checkbox = WebDriverWait(driver, 20).until(
+                        endirim_checkbox = WebDriverWait(driver, 40).until(
                             EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div"))
                         )
 
@@ -215,7 +215,7 @@ async def process_product(driver, product):
                             print("Галочка 'Скидка' не активна, активируем.")
                             endirim_checkbox.click()
 
-                        discount_price_input = WebDriverWait(driver, 20).until(
+                        discount_price_input = WebDriverWait(driver, 40).until(
                             EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                         )
 
@@ -227,7 +227,7 @@ async def process_product(driver, product):
                         print(f"Цена товара обновлена на {new_price} ₼")
                         await asyncio.sleep(3)
                         # Ожидаем, что кнопка "Готово" станет доступной
-                        save_button = WebDriverWait(driver, 30).until(
+                        save_button = WebDriverWait(driver, 40).until(
                             EC.element_to_be_clickable(
                                 (By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
                             )
