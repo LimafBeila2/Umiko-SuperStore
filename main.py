@@ -31,34 +31,49 @@ def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
+
 # Функция входа в Umico Business
-def login_to_umico(driver):
-    load_dotenv()
-    username = os.getenv("UMICO_USERNAME")
-    password = os.getenv("UMICO_PASSWORD")
+def login_to_umico(driver, current_url):
+    # Если текущий URL — страница входа, то сразу выполняем логин
+    if current_url == "https://business.umico.az/sign-in":
+        logging.info("Мы уже на странице входа. Выполняем авторизацию.")
+        
+        load_dotenv()
+        username = os.getenv("UMICO_USERNAME")
+        password = os.getenv("UMICO_PASSWORD")
 
-    if not username or not password:
-        raise ValueError("Ошибка: логин или пароль не найдены в .env")
+        if not username or not password:
+            raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
-    driver.get("https://business.umico.az/sign-in")
-    login_input = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
-    )
-    login_input.send_keys(username)
+        driver.get("https://business.umico.az/sign-in")
+        try:
+            # Ждем, пока появится поле для ввода логина
+            login_input = WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
+            )
+            login_input.send_keys(username)
+
+            # Вводим пароль
+            password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
+            password_input.send_keys(password)
+            password_input.send_keys(Keys.RETURN)
+
+            # Ждем, пока страница не перейдет на страницу с заказами
+            WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
+            logging.info("Успешный вход в Umico Business!")
+            sleep(3)
+            
+        except Exception as e:
+            logging.error(f"Ошибка входа: {e}")
+            driver.quit()
+            raise ValueError(f"Ошибка входа! Проверьте логин и пароль: {e}")
+
+        return driver
+
+    else:
+        logging.info("Страница не требует авторизации. Продолжаем работу.")
+        return driver  # Возвращаем драйвер, если авторизация не нужна
     
-    password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
-    password_input.send_keys(password)
-    password_input.send_keys(Keys.RETURN)
-    
-    try:
-        WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
-        sleep(3)
-        logging.info("Успешный вход в Umico Business!")
-    except:
-        logging.error("Ошибка входа!")
-        driver.quit()
-        raise ValueError("Ошибка входа! Проверь логин и пароль.")
-
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
@@ -126,8 +141,17 @@ def process_product(product):
         
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
+
+    # Пытаемся перейти на страницу редактирования
             driver.get(edit_url)
             sleep(5)
+
+    # Проверяем, если текущий URL - это страница входа, выполняем логин
+            current_url = driver.current_url
+            if "sign-in" in current_url:
+                logging.info("Необходима авторизация для изменения цены.")
+                driver = login_to_umico(driver, current_url)  # Входим в систему, если это страница входа
+
             
             
             try:
