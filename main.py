@@ -15,6 +15,11 @@ from concurrent.futures import ThreadPoolExecutor
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+load_dotenv()
+username = os.getenv("UMICO_USERNAME")
+password = os.getenv("UMICO_PASSWORD")
+
+
 # Настройки Chrome
 def create_driver():
     options = Options()
@@ -30,6 +35,7 @@ def create_driver():
 def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
+
 
 
 # Функция входа в Umico Business
@@ -82,6 +88,9 @@ def process_product(product):
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
+    except Exception as e:
+        logging.error(f"Ошибка при обработке товара: {e}")
+
         
         try:
             button = WebDriverWait(driver, 100).until(
@@ -130,48 +139,75 @@ def process_product(product):
             logging.info("Меняем цену...")
             driver.get(edit_url)
             sleep(5)
-            
-            
+    
+        # Проверяем, находимся ли на странице авторизации
+        if driver.current_url == "https://business.umico.az/sign-in":
+            logging.info("Необходимо авторизоваться.")
+        
+            # Выполняем авторизацию
+            load_dotenv()
+            username = os.getenv("UMICO_USERNAME")
+            password = os.getenv("UMICO_PASSWORD")
+        
+            if not username or not password:
+                raise ValueError("Ошибка: логин или пароль не найдены в .env")
+        
+            login_input = WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
+            )
+            login_input.send_keys(username)
+        
+            password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
+            password_input.send_keys(password)
+            password_input.send_keys(Keys.RETURN)
+        
             try:
-                # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
-                discount_checkbox = WebDriverWait(driver, 100).until(
-                    EC.presence_of_element_located((
-                        By.XPATH, 
-                        "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-                    ))
-                )
+                WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
+                sleep(3)
+                logging.info("Успешный вход в Umico Business!")
+            except:
+                logging.error("Ошибка входа!")
+                driver.quit()
+                raise ValueError("Ошибка входа! Проверь логин и пароль.")
+    
+    # После авторизации продолжаем процесс изменения цены
+    try:
+        # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
+        discount_checkbox = WebDriverWait(driver, 100).until(
+            EC.presence_of_element_located((
+                By.XPATH, 
+                "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
+            ))
+        )
 
-                # Если галочка не установлена, ставим её
-                if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                    discount_checkbox.click()
-                    logging.info("Галочка на скидку поставлена.")
+        # Если галочка не установлена, ставим её
+        if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+            discount_checkbox.click()
+            logging.info("Галочка на скидку поставлена.")
 
-                # Ждем появления поля для ввода скидочной цены (на двух языках)
-                discount_input = WebDriverWait(driver, 100).until(
-                    EC.presence_of_element_located((
-                        By.XPATH, 
-                        "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-                    ))
-                )
+        # Ждем появления поля для ввода скидочной цены (на двух языках)
+        discount_input = WebDriverWait(driver, 100).until(
+            EC.presence_of_element_located((
+                By.XPATH, 
+                "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
+            ))
+        )
 
-                # Устанавливаем новую цену
-                discount_input.clear()
-                discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+        # Устанавливаем новую цену
+        discount_input.clear()
+        discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+        logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                # Нажимаем на кнопку "Готово" или "Hazır"
-                save_button = WebDriverWait(driver, 100).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                )
-                sleep(2)
-                save_button.click()
-                logging.info("Цена обновлена!")
-                sleep(10)
-            except Exception as e:
-                logging.error(f"Ошибка при установке скидочной цены: {e}")
-            
+        # Нажимаем на кнопку "Готово" или "Hazır"
+        save_button = WebDriverWait(driver, 100).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+        )
+        sleep(2)
+        save_button.click()
+        logging.info("Цена обновлена!")
+        sleep(10)
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара {product_url}: {e}")
+        logging.error(f"Ошибка при установке скидочной цены: {e}")
     finally:
         driver.quit()
 
