@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import logging
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor , as_completed
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -176,15 +176,20 @@ def process_product(product):
     finally:
         driver.quit()
 
+
+def delayed_submit(executor, product, delay):
+    """Функция запускает процесс с задержкой"""
+    sleep(delay)
+    return executor.submit(process_product, product)
+
 def process_products_from_json(json_file):
     products = load_json(json_file)
     
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = []
-        for i, product in enumerate(products):
-            sleep(i * 5)  # Добавляем задержку 5 секунд перед каждым новым запуском
-            future = executor.submit(process_product, product)
-            futures.append(future)
+        futures = [delayed_submit(executor, product, i * 5) for i, product in enumerate(products)]
+        
+        for future in as_completed(futures):  # Ожидание выполнения всех задач
+            future.result()
 
 if __name__ == "__main__":
     process_products_from_json("product.json")
