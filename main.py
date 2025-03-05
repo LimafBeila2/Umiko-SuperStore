@@ -33,6 +33,7 @@ service = Service("/usr/bin/chromedriver")
 # Создаем веб-драйвер
 driver = webdriver.Chrome(service=service, options=options)
 
+
 # Функция для входа в аккаунт Umico Business с использованием данных из .env
 def login_to_umico(driver):
     load_dotenv()
@@ -263,6 +264,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"Ошибка в основном потоке: {e}")
+        logging.error(f"Ошибка в основном потоке: {e}")
 
     finally:
         driver.quit()
