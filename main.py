@@ -87,7 +87,7 @@ async def close_ad(driver):
         print("Окно выбора города не появилось, продолжаем выполнение кода.")
 
 
-def click_element_by_text(text1, text2):
+def click_element_by_text(driver, text1, text2):
     # Используем XPath с условием "или" для поиска обоих текстов
     element = driver.find_element(By.XPATH, f"//a[contains(text(), '{text1}') or contains(text(), '{text2}')]")
     actions = ActionChains(driver)
@@ -131,7 +131,7 @@ async def process_product(driver, product):
         await close_ad(driver)
 
         # Кликаем по ссылке "Посмотреть цены всех продавцов" на разных языках
-        click_element_by_text("Bütün satıcıların qiymətlərinə baxmaq", "Посмотреть цены всех продавцов")
+        click_element_by_text(driver, "Bütün satıcıların qiymətlərinə baxmaq", "Посмотреть цены всех продавцов")
 
         # Ожидаем загрузки блока с товарами
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer")))
