@@ -31,13 +31,12 @@ def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
-
 # Функция входа в Umico Business
 def login_to_umico(driver, current_url):
     # Если текущий URL — страница входа, то сразу выполняем логин
     if "sign-in" in current_url:
-        logging.info("Мы уже на странице входа. Выполняем авторизацию.")
-        
+        logging.info("Мы на странице входа. Выполняем авторизацию.")
+
         load_dotenv()
         username = os.getenv("UMICO_USERNAME")
         password = os.getenv("UMICO_PASSWORD")
@@ -62,7 +61,7 @@ def login_to_umico(driver, current_url):
             WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
             logging.info("Успешный вход в Umico Business!")
             sleep(3)
-            
+
         except Exception as e:
             logging.error(f"Ошибка входа: {e}")
             driver.quit()
@@ -70,9 +69,8 @@ def login_to_umico(driver, current_url):
 
     else:
         logging.info("Страница не требует авторизации. Продолжаем работу.")
-    
-    return driver
 
+    return driver
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
