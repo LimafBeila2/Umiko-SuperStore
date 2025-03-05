@@ -1,6 +1,6 @@
 import json
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -14,9 +14,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# Путь к Chrome и chromedriver
 chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 chromedriver_path = "C:/path/to/chromedriver.exe"
-
 
 # Опции для браузера Chrome
 options = Options()
@@ -25,10 +26,11 @@ options.add_argument("--headless")  # Работать без GUI
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Создание сервиса и драйвера
-service = Service(chromedriver_path)
-driver = webdriver.Chrome(service=service, options=options)
-
+# Функция создания драйвера
+def create_driver():
+    service = Service(chromedriver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 # Функция загрузки JSON
 def load_json(filename):
