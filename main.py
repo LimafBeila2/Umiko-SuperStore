@@ -151,7 +151,7 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        process_products_from_json("products.json")
+        process_products_from_json("C:/Users/Famka/.vscode/selenium/product.json")
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
