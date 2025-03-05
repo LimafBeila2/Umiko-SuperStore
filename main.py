@@ -81,9 +81,8 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
     close_ad(driver)
 
     try:
-        # Обновленный XPath для кнопки "Bütün satıcıların qiymətlərinə baxmaq"
         button = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+            EC.presence_of_element_located((By.XPATH, "//div[@class='Other-Sellers']//a[contains(text(),'Bütün satıcıların qiymətlərinə baxmaq')]"))
         )
         button.click()
     except:
@@ -91,11 +90,10 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
         return
 
     WebDriverWait(driver, 30).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductPricesOtherSellers"))
+        EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
     )
-
-    # Извлекаем все предложения от других продавцов
-    product_offers = driver.find_elements(By.CLASS_NAME, "MPProductPricesOtherSellers-List")
+    
+    product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
     if not product_offers:
         logging.warning("Нет предложений по этому товару.")
         return
@@ -103,18 +101,15 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
     lowest_price = float('inf')
     lowest_price_merchant = ""
     super_store_price = None
-
+    
     for offer in product_offers:
         try:
-            # Извлекаем цену и продавца
+            merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
             price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
             price_text_cleaned = price_text.replace("₼", "").strip()
             if not price_text_cleaned:
                 continue
             price = float(price_text_cleaned)
-
-            merchant = offer.find_element(By.XPATH, ".//span[@class='text-[11px] !text-[#50557a] !font-bold']").text.strip()
-
             if merchant == "Super Store":
                 super_store_price = price
             if price < lowest_price:
@@ -123,16 +118,16 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
         except Exception as e:
             logging.warning(f"Ошибка при обработке предложения: {e}")
             continue
-
+    
     logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
     if super_store_price is not None:
         logging.info(f"Цена от Super Store: {super_store_price}")
-
+    
     if super_store_price is not None and lowest_price < super_store_price:
         logging.info("Меняем цену...")
         driver.get(edit_url)
         sleep(5)
-
+        
         try:
             discount_checkbox = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
@@ -189,7 +184,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = 2  # Запускаем 2 потока
+    num_threads = min(10, len(products))  # Запускаем не больше 10 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
