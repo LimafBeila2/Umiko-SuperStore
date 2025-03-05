@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     unzip \
+    chromium \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
