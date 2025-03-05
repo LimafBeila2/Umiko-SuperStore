@@ -12,6 +12,7 @@ from queue import Queue
 from threading import Thread, Lock
 import time
 import logging
+from time import sleep
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -62,7 +63,7 @@ def login_to_umico(driver):
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
-        WebDriverWait(driver, 3).until(
+        WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         ).click()
         logging.info("Город Баку выбран.")
@@ -79,7 +80,7 @@ def process_product(driver, product):
     close_ad(driver)
 
     try:
-        button = WebDriverWait(driver, 5).until(
+        button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
         )
         button.click()
@@ -88,7 +89,7 @@ def process_product(driver, product):
         return
 
     try:
-        product_offers = WebDriverWait(driver, 5).until(
+        product_offers = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
         )
     except:
@@ -123,20 +124,20 @@ def process_product(driver, product):
         time.sleep(1)
 
         try:
-            discount_checkbox = WebDriverWait(driver, 5).until(
+            discount_checkbox = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
             )
 
             if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
                 discount_checkbox.click()
-
-            discount_input = WebDriverWait(driver, 5).until(
+            sleep(3)
+            discount_input = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
             )
 
             discount_input.clear()
             discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-            time.sleep(1)
+            time.sleep(2)
 
             save_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
