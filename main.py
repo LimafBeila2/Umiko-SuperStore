@@ -131,8 +131,9 @@ def process_product(product):
             
             try:
                 discount_checkbox = WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                )
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                    )
+                
                 if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
                     discount_checkbox.click()
                     logging.info("Галочка на скидку поставлена.")
