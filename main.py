@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import logging
+import os
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -28,8 +29,12 @@ driver = webdriver.Chrome(service=service, options=options)
 
 # Функция загрузки JSON
 def load_json(filename):
-    with open(filename, "r", encoding="utf-8") as file:
-        return json.load(file)
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as file:
+            return json.load(file)
+    else:
+        logging.error(f"Файл {filename} не найден.")
+        raise FileNotFoundError(f"Файл {filename} не найден.")
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -151,7 +156,7 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        process_products_from_json("C:/Users/Famka/.vscode/selenium/product.json")
+        process_products_from_json("product.json")  # Убедитесь, что путь правильный
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
