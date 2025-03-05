@@ -50,12 +50,27 @@ class Product(Base):
 # Функция для создания таблицы с обработкой ошибок
 async def create_table():
     try:
-        # Проверяем соединение с базой данных
+        # Проверяем соединение с базой данных и создаем таблицу
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         print("Таблица успешно создана!")
+
+        # Вставляем данные в таблицу
+        async with async_session() as session:
+            # Создание объекта товара с данными
+            product = Product(
+                id=339754,
+                product_url="https://umico.az/product/339754-qadinlar-uchun-tualet-suyu-bvlgari-omnia-coral-65-ml",
+                edit_url="https://business.umico.az/account/products/my/2576516",
+                current_price=1.0,
+                last_checked_price=1.0,
+                last_checked=datetime(2025, 3, 5, 19, 39, 14)
+            )
+            session.add(product)  # Добавляем объект в сессию
+            await session.commit()  # Сохраняем в базу данных
+        print("Данные успешно добавлены в таблицу!")
     except Exception as e:
-        print(f"Ошибка при создании таблицы: {e}")
+        print(f"Ошибка при создании таблицы или вставке данных: {e}")
         # Дополнительная диагностика:
         print("Проверьте, существует ли база данных и корректны ли права доступа.")
 
