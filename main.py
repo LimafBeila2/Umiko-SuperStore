@@ -74,7 +74,6 @@ def close_ad(driver):
 def process_product(product):
     driver = create_driver()
     try:
-        login_to_umico(driver)
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Обрабатываем товар: {product_url}")
         driver.get(product_url)
@@ -129,8 +128,10 @@ def process_product(product):
             driver.get(edit_url)
             sleep(5)
             
-            
             try:
+                # Входим в систему только если нужно изменить цену
+                login_to_umico(driver)
+                
                 # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
                 discount_checkbox = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((
@@ -182,9 +183,3 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     process_products_from_json("product.json")
     logging.info("Работа завершена!")
-
-
-
-
-
-
