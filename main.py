@@ -68,7 +68,7 @@ def login_to_umico(driver, current_url):
             driver.quit()
             raise ValueError(f"Ошибка входа! Проверьте логин и пароль: {e}")
 
-        return driver
+        
 
     else:
         logging.info("Страница не требует авторизации. Продолжаем работу.")
