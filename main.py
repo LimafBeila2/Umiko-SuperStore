@@ -1,6 +1,6 @@
 import json
-import os
 from dotenv import load_dotenv
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -15,16 +15,16 @@ from concurrent.futures import ThreadPoolExecutor
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Путь к Chrome и chromedriver
-chrome_path = "/usr/bin/chromium"
-driver = webdriver.Chrome(executable_path= "C:\Users\Famka\.vscode\selenium\chromedriver\chromedriver.exe")
-# Опции для браузера Chrome
-options = Options()
-options.binary_location = chrome_path  # Устанавливаем путь к Chrome
-options.add_argument("--headless")  # Работать без GUI
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-
+# Настройки Chrome
+def create_driver():
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    service = Service("/usr/bin/chromedriver")
+    return webdriver.Chrome(service=service, options=options)
 
 # Функция загрузки JSON
 def load_json(filename):
@@ -72,7 +72,7 @@ def close_ad(driver):
 
 # Функция обработки товаров
 def process_product(product):
-    driver = webdriver.Chrome()
+    driver = create_driver()
     try:
         login_to_umico(driver)
         product_url, edit_url = product["product_url"], product["edit_url"]
@@ -81,15 +81,11 @@ def process_product(product):
         sleep(2)
         close_ad(driver)
         
-        # Пытаемся найти кнопку для просмотра цен всех продавцов
         try:
             button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]")
-                )
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
             )
             button.click()
-            logging.info("Открыты цены всех продавцов.")
         except:
             logging.warning("Не удалось найти кнопку просмотра цен.")
             return
@@ -133,10 +129,14 @@ def process_product(product):
             driver.get(edit_url)
             sleep(5)
             
+            
             try:
                 # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
                 discount_checkbox = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
+                    ))
                 )
 
                 # Если галочка не установлена, ставим её
@@ -146,7 +146,10 @@ def process_product(product):
 
                 # Ждем появления поля для ввода скидочной цены (на двух языках)
                 discount_input = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
+                    ))
                 )
 
                 # Устанавливаем новую цену
@@ -179,3 +182,9 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     process_products_from_json("product.json")
     logging.info("Работа завершена!")
+
+
+
+
+
+
