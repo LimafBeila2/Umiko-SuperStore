@@ -181,7 +181,7 @@ async def process_product(driver, product):
                         lowest_price_merchant = merchant
 
             except Exception as e:
-                print(f"Ошибка при обработке товара: {e}")
+                logging.error(f"Ошибка при обработке товара: {e}")
                 continue
 
         # Выводим результаты
@@ -225,6 +225,7 @@ async def process_product(driver, product):
 
     except Exception as e:
         logging.error(f"Ошибка при обработке товара: {product[1]}: {e}")
+        driver.quit()
 
 
 # Основная функция для посещения товаров
