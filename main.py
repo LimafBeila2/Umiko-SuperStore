@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+import json
 
 # Настроим логирование
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +20,12 @@ def create_driver():
     options.add_argument("--no-sandbox")
     driver = webdriver.Chrome(options=options)
     return driver
+
+# Функция загрузки JSON
+def load_json(filename):
+    with open(filename, "r", encoding="utf-8") as file:
+        return json.load(file)
+
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
