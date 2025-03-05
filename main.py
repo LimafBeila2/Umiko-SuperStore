@@ -15,6 +15,9 @@ from concurrent.futures import ThreadPoolExecutor
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Путь к вашему локальному chromedriver
+chromedriver_path = "/path/to/your/chromedriver"
+
 # Путь к Chrome
 chrome_path = "/usr/bin/chromium"
 
@@ -25,6 +28,11 @@ options.add_argument("--headless")  # Работать без GUI
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
+# Функция создания драйвера
+def create_driver():
+    service = Service(chromedriver_path)  # Указываем путь к драйверу
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 # Функция создания драйвера
 def create_driver():
     # Загружаем и устанавливаем chromedriver автоматически с помощью webdriver-manager
