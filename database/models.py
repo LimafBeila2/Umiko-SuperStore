@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, async_sessio
 from sqlalchemy.orm import DeclarativeBase
 from dotenv import load_dotenv  # Для загрузки переменных из .env файла
 
-# Загружаем переменные окружения из .env файла
+# Загружаем переменные окружения из .env файл
 load_dotenv()
 
 # Установите переменные окружения
