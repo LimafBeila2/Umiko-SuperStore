@@ -94,6 +94,10 @@ def process_product(driver, product_url, edit_url):
         
         # Анализируем цены продавцов
         product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
+        if not product_offers:
+            logging.warning("Нет предложений по этому товару.")
+            return
+        
         lowest_price = float('inf')
         lowest_price_merchant = ""
         super_store_price = None
@@ -102,6 +106,10 @@ def process_product(driver, product_url, edit_url):
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
                 price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip().replace("₼", "").strip()
+                
+                if not price_text:
+                    continue
+                
                 price = float(price_text)
                 
                 if merchant == "Super Store":
@@ -110,7 +118,8 @@ def process_product(driver, product_url, edit_url):
                 if price < lowest_price:
                     lowest_price = price
                     lowest_price_merchant = merchant
-            except:
+            except Exception as e:
+                logging.warning(f"Ошибка при обработке предложения: {e}")
                 continue
         
         logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
@@ -151,7 +160,7 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        process_products_from_json("product.json")  # Указываем только название файла
+        process_products_from_json("stltnium/products.json")
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
