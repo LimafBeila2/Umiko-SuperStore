@@ -202,7 +202,7 @@ async def process_product(driver, product):
 
                         # Ожидаем, что появится элемент с чекбоксом "Скидка"
                         endirim_checkbox = WebDriverWait(driver, 20).until(
-                            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка')]//preceding-sibling::div"))
+                            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div"))
                         )
 
                         try:
