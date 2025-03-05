@@ -10,8 +10,8 @@ from dotenv import load_dotenv  # Для загрузки переменных �
 load_dotenv()
 
 # Установите переменные окружения
-PGHOST = os.getenv('PGHOST', 'postgres.railway.internal')  # Новый хост
-PGPORT = os.getenv('PGPORT', '5432')  # Новый порт
+PGHOST = os.getenv('PGHOST', 'ballast.proxy.rlwy.net')  # Новый хост
+PGPORT = os.getenv('PGPORT', '23916')  # Новый порт
 PGUSER = os.getenv('PGUSER', 'postgres')
 PGPASSWORD = os.getenv('PGPASSWORD', 'OkkimJRMrGzuTeFcvASGMADvOghkZNte')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
