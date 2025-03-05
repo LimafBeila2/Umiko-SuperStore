@@ -70,6 +70,34 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
+# Функция активации скидочной цены, если она не активна
+def activate_discount_if_needed(driver):
+    try:
+        # Ищем поле для ввода скидочной цены
+        discount_input = driver.find_element(By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")
+        
+        # Проверяем, активно ли поле
+        if not discount_input.is_enabled():
+            logging.info("Поле скидочной цены неактивно, активируем...")
+
+            # Находим элемент, который активирует скидочную цену (например, переключатель)
+            activate_discount_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]"))
+            )
+            activate_discount_button.click()
+            logging.info("Скидка активирована.")
+
+            # Повторно находим поле скидочной цены после активации
+            discount_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+            )
+            
+        else:
+            logging.info("Поле скидочной цены уже активно.")
+    
+    except Exception as e:
+        logging.error(f"Ошибка при активации скидочной цены: {e}")
+
 # Функция обработки товаров
 def process_product(driver, product_url, edit_url):
     try:
@@ -135,10 +163,14 @@ def process_product(driver, product_url, edit_url):
             driver.get(edit_url)
             sleep(5)
             
-            discount_input = WebDriverWait(driver, 10).until(
+            discount_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
             )
             
+            # Активируем скидочную цену, если она не активна
+            activate_discount_if_needed(driver)
+            
+            # Рассчитываем новую цену
             new_price = round(lowest_price - 0.01, 2)
             discount_input.clear()
             discount_input.send_keys(str(new_price))
