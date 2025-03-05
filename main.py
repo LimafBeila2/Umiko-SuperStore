@@ -17,9 +17,12 @@ import logging
 from selenium.common.exceptions import TimeoutException
 
 
+# Путь к установленному Chrome
+chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Укажите свой путь к chrome.exe
 
 # Настройки Chrome
 options = Options()
+options.binary_location = chrome_path  # Указываем путь к установленному Chrome
 options.add_argument("--disable-blink-features=AutomationControlled")  # Отключение признаков автоматизации
 options.add_argument("--headless")  # Для работы без графического интерфейса
 options.add_argument("--no-sandbox")  # Важно для серверов, таких как Railway
@@ -27,7 +30,7 @@ options.add_argument("--disable-dev-shm-usage")  # Решает некоторы
 options.add_argument("--disable-gpu")  # Отключение использования GPU для повышения производительности
 options.add_argument("--window-size=1920x1080")  # Установка размера окна для headless режима
 
-# Автоустановка ChromeDriver
+# Автоустановка ChromeDriver с использованием webdriver_manager
 service = Service(ChromeDriverManager().install())
 
 # Создание экземпляра драйвера с установленными опциями
