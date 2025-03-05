@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Путь к Chrome и chromedriver
 chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-chromedriver_path = "C:/path/to/chromedriver.exe"
+chromedriver_path = "C:/Users/Famka/.vscode/selenium/chromedriver/chromedriver.exe"
 
 # Опции для браузера Chrome
 options = Options()
