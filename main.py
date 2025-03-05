@@ -19,15 +19,17 @@ def create_driver():
     options.add_argument("--no-sandbox")
     driver = webdriver.Chrome(options=options)
     return driver
-
-# Функция закрытия рекламы
+# Функция для закрытия рекламы
 def close_ad(driver):
     try:
-        ad_close_button = driver.find_element(By.XPATH, "//button[@class='close']")
-        ad_close_button.click()
-        logging.info("Реклама закрыта.")
-    except Exception as e:
-        logging.warning(f"Ошибка при закрытии рекламы: {e}")
+        baku_option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
+        )
+        baku_option.click()
+        logging.info("Город Баку выбран.")
+    except:
+        logging.info("Окно выбора города не появилось.")
+
 
 # Функция авторизации на Umico
 def login_to_umico(driver):
