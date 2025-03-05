@@ -82,9 +82,7 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
 
     try:
         button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH,
-                "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-            ))
+            EC.presence_of_element_located((By.XPATH, "//div[@class='Other-Sellers']//a[contains(text(),'Bütün satıcıların qiymətlərinə baxmaq')]"))
         )
         button.click()
     except:
