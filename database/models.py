@@ -17,11 +17,9 @@ PGPASSWORD = os.getenv('PGPASSWORD', 'OkkimJRMrGzuTeFcvASGMADvOghkZNte')
 PGDATABASE = os.getenv('PGDATABASE', 'railway')
 
 # Формирование строки подключения
-load_dotenv()
-
 DATABASE_URL = f"postgresql+asyncpg://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
-# Выводим переменные для проверки
 
+# Выводим переменные для проверки
 print("PGHOST:", PGHOST)
 print("PGUSER:", PGUSER)
 print("PGPASSWORD:", PGPASSWORD)
@@ -49,9 +47,21 @@ class Product(Base):
     last_checked_price = Column(Float)
     last_checked = Column(DateTime, default=datetime.utcnow)
 
+# Функция для проверки соединения с базой данных
+async def test_connection():
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute("SELECT 1")
+            print("Соединение с базой данных установлено успешно!")
+    except Exception as e:
+        print(f"Ошибка при подключении: {e}")
+
 # Функция для создания таблицы с обработкой ошибок
 async def create_table():
     try:
+        # Проверяем соединение с базой данных
+        await test_connection()
+
         # Проверяем соединение с базой данных и создаем таблицу
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
