@@ -20,6 +20,9 @@ from selenium.common.exceptions import TimeoutException
 # Настройки Chrome
 options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")
+options.add_argument("--headless")  # Работает в фоновом режиме без UI
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 
 # Автоустановка ChromeDriver
 service = Service(ChromeDriverManager().install())
