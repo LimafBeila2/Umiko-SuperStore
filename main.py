@@ -16,16 +16,21 @@ from sqlalchemy.future import select
 import logging
 from selenium.common.exceptions import TimeoutException
 
-# Настройки логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Настройки Chrome
 options = Options()
-options.add_argument("--disable-blink-features=AutomationControlled")
+options.binary_location = "/usr/bin/chromium"
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--window-size=1920x1080")
 
-# Автоустановка ChromeDriver
-service = Service(ChromeDriverManager().install())
+# Используем системный chromedriver
+service = Service("/usr/bin/chromedriver")
+
+# Создаем веб-драйвер
 driver = webdriver.Chrome(service=service, options=options)
+
 
 
 # Функция для входа в аккаунт Umico Business с использованием данных из .env
