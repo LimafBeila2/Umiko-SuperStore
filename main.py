@@ -15,6 +15,8 @@ from database.models import async_session, Product
 from sqlalchemy.future import select
 import logging
 from selenium.common.exceptions import TimeoutException
+from sqlalchemy.exc import OperationalError
+import time
 
 
 # Настройки Chrome
@@ -90,6 +92,28 @@ def click_element_by_text(text1, text2):
     actions = ActionChains(driver)
     actions.move_to_element(element).perform()
     element.click()
+
+
+# Функция для проверки существования таблицы в базе данных
+async def wait_for_table_creation():
+    max_retries = 10
+    retries = 0
+    while retries < max_retries:
+        try:
+            async with async_session() as session:
+                async with session.begin():
+                    # Проверяем наличие таблицы, выполняя запрос
+                    result = await session.execute(select(Product.id).limit(1))  # Просто пробуем запросить данные
+                    result.fetchall()  # Проверка, есть ли записи
+                    print("Таблица существует!")
+                    return True
+        except OperationalError:
+            # Если таблица не существует, ждем некоторое время и пробуем снова
+            print("Таблица не существует, ждем...")
+            retries += 1
+            time.sleep(3)  # Ожидаем 3 секунды перед повторной попыткой
+    print("Не удалось найти таблицу после нескольких попыток.")
+    return False
 
 
 # Основная функция для обработки каждого товара
@@ -220,10 +244,13 @@ async def process_product(driver, product):
 
 # Основная функция для посещения товаров
 async def visit_products(driver):
-    products = await get_product_urls()  # Получаем все товары из базы данных
+    if await wait_for_table_creation():  # Проверяем, существует ли таблица
+        products = await get_product_urls()  # Получаем все товары из базы данных
 
-    for product in products:
-        await process_product(driver, product)
+        for product in products:
+            await process_product(driver, product)
+    else:
+        print("Ошибка: таблица не существует. Завершаем работу.")
 
 
 if __name__ == "__main__":
