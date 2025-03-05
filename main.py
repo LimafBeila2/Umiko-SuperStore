@@ -105,8 +105,9 @@ def process_product(driver, product_url, edit_url):
         for offer in product_offers:
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip().replace("₼", "").strip()
-                
+                price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
+                price = float(price_text.replace("₼", "").strip())
+
                 if not price_text:
                     continue
                 
