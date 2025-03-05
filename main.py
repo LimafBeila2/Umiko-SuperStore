@@ -17,8 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Путь к Chrome и chromedriver
 chrome_path = "/usr/bin/chromium"
-chromedriver_path = "/usr/bin/chromedriver"
-
+driver = webdriver.Chrome(executable_path= "C:\Users\Famka\.vscode\selenium\chromedriver\chromedriver.exe")
 # Опции для браузера Chrome
 options = Options()
 options.binary_location = chrome_path  # Устанавливаем путь к Chrome
@@ -26,11 +25,6 @@ options.add_argument("--headless")  # Работать без GUI
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Функция создания драйвера
-def create_driver():
-    service = Service(chromedriver_path)
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
 
 # Функция загрузки JSON
 def load_json(filename):
@@ -78,7 +72,7 @@ def close_ad(driver):
 
 # Функция обработки товаров
 def process_product(product):
-    driver = create_driver()
+    driver = webdriver.Chrome()
     try:
         login_to_umico(driver)
         product_url, edit_url = product["product_url"], product["edit_url"]
