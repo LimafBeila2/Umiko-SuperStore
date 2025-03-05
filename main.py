@@ -81,7 +81,7 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
     close_ad(driver)
 
     try:
-        # Обновлённый XPath с учётом правильной структуры
+        # Обновленный XPath для кнопки "Bütün satıcıların qiymətlərinə baxmaq"
         button = WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
         )
@@ -91,26 +91,30 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
         return
 
     WebDriverWait(driver, 30).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
+        EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductPricesOtherSellers"))
     )
 
-    product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
+    # Извлекаем все предложения от других продавцов
+    product_offers = driver.find_elements(By.CLASS_NAME, "MPProductPricesOtherSellers-List")
     if not product_offers:
         logging.warning("Нет предложений по этому товару.")
         return
-
+    
     lowest_price = float('inf')
     lowest_price_merchant = ""
     super_store_price = None
 
     for offer in product_offers:
         try:
-            merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
+            # Извлекаем цену и продавца
             price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
             price_text_cleaned = price_text.replace("₼", "").strip()
             if not price_text_cleaned:
                 continue
             price = float(price_text_cleaned)
+
+            merchant = offer.find_element(By.XPATH, ".//span[@class='text-[11px] !text-[#50557a] !font-bold']").text.strip()
+
             if merchant == "Super Store":
                 super_store_price = price
             if price < lowest_price:
@@ -128,6 +132,42 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
         logging.info("Меняем цену...")
         driver.get(edit_url)
         sleep(5)
+
+        try:
+            discount_checkbox = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+            )
+
+            if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                discount_checkbox.click()
+                logging.info("Галочка на скидку поставлена.")
+
+            discount_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+            )
+
+            discount_input.clear()
+            discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+            logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+
+            save_button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+            )
+            sleep(2)
+            save_button.click()
+            logging.info("Цена обновлена!")
+            sleep(10)
+        except Exception as e:
+            logging.error(f"Ошибка при установке скидочной цены: {e}")
+
+            logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
+        if super_store_price is not None:
+            logging.info(f"Цена от Super Store: {super_store_price}")
+
+        if super_store_price is not None and lowest_price < super_store_price:
+            logging.info("Меняем цену...")
+            driver.get(edit_url)
+            sleep(5)
 
         try:
             discount_checkbox = WebDriverWait(driver, 10).until(
