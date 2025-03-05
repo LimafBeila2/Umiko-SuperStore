@@ -31,46 +31,6 @@ def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
-# Функция входа в Umico Business
-def login_to_umico(driver, current_url):
-    # Проверяем, что мы на странице входа, только если это необходимо
-    if "sign-in" in current_url:
-        logging.info("Мы на странице входа. Выполняем авторизацию.")
-
-        load_dotenv()
-        username = os.getenv("UMICO_USERNAME")
-        password = os.getenv("UMICO_PASSWORD")
-
-        if not username or not password:
-            raise ValueError("Ошибка: логин или пароль не найдены в .env")
-
-        driver.get("https://business.umico.az/sign-in")
-        try:
-            # Ждем, пока появится поле для ввода логина
-            login_input = WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
-            )
-            login_input.send_keys(username)
-
-            # Вводим пароль
-            password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
-            password_input.send_keys(password)
-            password_input.send_keys(Keys.RETURN)
-
-            # Ждем, пока страница не перейдет на страницу с заказами
-            WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
-            logging.info("Успешный вход в Umico Business!")
-            sleep(3)
-
-        except Exception as e:
-            logging.error(f"Ошибка входа: {e}")
-            driver.quit()
-            raise ValueError(f"Ошибка входа! Проверьте логин и пароль: {e}")
-
-    else:
-        logging.info("Страница не требует авторизации. Продолжаем работу.")
-
-    return driver
 
 # Функция для закрытия рекламы
 def close_ad(driver):
@@ -87,13 +47,12 @@ def close_ad(driver):
 def process_product(product):
     driver = create_driver()
     try:
-        login_to_umico(driver)
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Обрабатываем товар: {product_url}")
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
-
+        
         try:
             button = WebDriverWait(driver, 100).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
@@ -102,7 +61,7 @@ def process_product(product):
         except:
             logging.warning("Не удалось найти кнопку просмотра цен.")
             return
-
+        
         WebDriverWait(driver, 100).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
         )
@@ -140,22 +99,23 @@ def process_product(product):
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
 
-            # Пытаемся перейти на страницу редактирования
+    # Пытаемся перейти на страницу редактирования
             driver.get(edit_url)
             sleep(5)
 
-            # Проверяем, если текущий URL - это страница входа, выполняем логин
+    # Проверяем, если текущий URL - это страница входа, выполняем логин
             current_url = driver.current_url
             if "sign-in" in current_url:
                 logging.info("Необходима авторизация для изменения цены.")
-                driver = login_to_umico(driver, current_url)  # Входим в систему, если это страница входа
-            elif "edit" in current_url or "product" in current_url:
-                logging.info("Страница редактирования товара. Продолжаем изменение цены.")
 
+            
             try:
                 # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
                 discount_checkbox = WebDriverWait(driver, 100).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
+                    ))
                 )
 
                 # Если галочка не установлена, ставим её
@@ -165,7 +125,10 @@ def process_product(product):
 
                 # Ждем появления поля для ввода скидочной цены (на двух языках)
                 discount_input = WebDriverWait(driver, 100).until(
-                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                    EC.presence_of_element_located((
+                        By.XPATH, 
+                        "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
+                    ))
                 )
 
                 # Устанавливаем новую цену
@@ -183,12 +146,12 @@ def process_product(product):
                 sleep(10)
             except Exception as e:
                 logging.error(f"Ошибка при установке скидочной цены: {e}")
-
+            
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара {product_url}: {e}")
     finally:
         driver.quit()
-        
+
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
