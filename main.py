@@ -1,31 +1,40 @@
+import json
+from dotenv import load_dotenv
 import os
-import logging
-from time import sleep
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from dotenv import load_dotenv
-import json
+from time import sleep
+import logging
+from concurrent.futures import ThreadPoolExecutor
 
-# Настроим логирование
-logging.basicConfig(level=logging.INFO)
 
-# Функция для создания драйвера
+# Логирование
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+
+# Настройки Chrome
 def create_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Запуск в фоновом режиме (без открытия окна)
-    options.add_argument("--disable-gpu")
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
-    driver = webdriver.Chrome(options=options)
-    return driver
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    service = Service("/usr/bin/chromedriver")
+    return webdriver.Chrome(service=service, options=options)
+
 
 # Функция загрузки JSON
 def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
-
+    
+    
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
