@@ -35,7 +35,7 @@ def load_json(filename):
 # Функция входа в Umico Business
 def login_to_umico(driver, current_url):
     # Если текущий URL — страница входа, то сразу выполняем логин
-    if current_url == "https://business.umico.az/sign-in":
+    if "sign-in" in current_url:
         logging.info("Мы уже на странице входа. Выполняем авторизацию.")
         
         load_dotenv()
@@ -68,13 +68,11 @@ def login_to_umico(driver, current_url):
             driver.quit()
             raise ValueError(f"Ошибка входа! Проверьте логин и пароль: {e}")
 
-        
-
     else:
         logging.info("Страница не требует авторизации. Продолжаем работу.")
     
-    return driver  # Возвращаем драйвер, если авторизация не нужна
-    
+    return driver
+
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
