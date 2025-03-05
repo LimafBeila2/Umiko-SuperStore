@@ -17,19 +17,21 @@ import logging
 from selenium.common.exceptions import TimeoutException
 
 
+
 # Настройки Chrome
 options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")  # Отключение признаков автоматизации
 options.add_argument("--headless")  # Для работы без графического интерфейса
 options.add_argument("--no-sandbox")  # Важно для серверов, таких как Railway
 options.add_argument("--disable-dev-shm-usage")  # Решает некоторые проблемы с памятью
+options.add_argument("--disable-gpu")  # Отключение использования GPU для повышения производительности
+options.add_argument("--window-size=1920x1080")  # Установка размера окна для headless режима
 
 # Автоустановка ChromeDriver
 service = Service(ChromeDriverManager().install())
 
 # Создание экземпляра драйвера с установленными опциями
 driver = webdriver.Chrome(service=service, options=options)
-
 
 # Функция для входа в аккаунт Umico Business с использованием данных из .env
 def login_to_umico(driver):
