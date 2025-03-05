@@ -10,17 +10,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import logging
-from webdriver_manager.chrome import ChromeDriverManager
 from concurrent.futures import ThreadPoolExecutor
+
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Путь к chromedriver
-chromedriver_path = r"C:/Users/Famka/vscode/selenium/chromedriver/chromedriver"
-
-# Путь к Chrome (если установлен в стандартном месте, или укажите свой путь)
-chrome_path = r"C:/Program Files/Google/Chrome/Application/chrome"  # Убедитесь, что путь правильный
-
+# Путь к Chrome и chromedriver
+chrome_path = "/usr/bin/chromium"
+chromedriver_path = "/usr/bin/chromedriver"
 
 # Опции для браузера Chrome
 options = Options()
@@ -31,14 +28,8 @@ options.add_argument("--disable-dev-shm-usage")
 
 # Функция создания драйвера
 def create_driver():
-    service = Service(chromedriver_path)  # Указываем путь к драйверу
+    service = Service(chromedriver_path)
     driver = webdriver.Chrome(service=service, options=options)
-    return driver
-# Функция создания драйвера
-def create_driver():
-    # Загружаем и устанавливаем chromedriver автоматически с помощью webdriver-manager
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)  # Используем service для создания драйвера
     return driver
 
 # Функция загрузки JSON
