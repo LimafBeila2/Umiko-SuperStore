@@ -116,6 +116,15 @@ async def wait_for_table_creation():
     return False
 
 
+# Функция для обновления цены товара в базе данных
+async def update_product_price_in_db(product_to_update, new_price):
+    async with async_session() as session:
+        async with session.begin():
+            product_to_update.current_price = new_price
+            await session.commit()
+            print(f"Цена товара обновлена в базе на {new_price} ₼")
+
+
 # Основная функция для обработки каждого товара
 async def process_product(driver, product):
     try:
@@ -134,9 +143,6 @@ async def process_product(driver, product):
 
         # Ожидаем загрузки блока с товарами
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer")))
-
-    except Exception as e:
-        print(f"Ошибка при обработке товара: {product_url}: {e}")
 
         # Находим все блоки товаров
         product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
@@ -183,60 +189,39 @@ async def process_product(driver, product):
         if super_store_price is not None:
             print(f"Цена от Super Store: {super_store_price}")
 
-        # Записываем текущую цену и последнюю проверенную цену
+        # Обновление базы данных и изменение цены, если нужно
         async with async_session() as session:
             async with session.begin():
                 result = await session.execute(select(Product).filter(Product.product_url == product_url))
                 product_to_update = result.scalars().first()
 
                 if product_to_update:
-                    product_to_update.current_price = super_store_price  # Записываем цену от Super Store
-                    product_to_update.last_checked_price = lowest_price  # Записываем самую низкую цену конкурента
+                    product_to_update.last_checked_price = lowest_price  # Обновляем самую низкую цену конкурента
 
-                    # Если цена конкурента ниже, открываем ссылку для изменения цены
+                    # Сравниваем с ценой Super Store и обновляем, если нужно
                     if lowest_price < super_store_price:
                         print("Цена конкурента ниже, открываем ссылку для изменения цены.")
-                        driver.get(product_to_update.edit_url)  # Переход по ссылке для изменения цены
+                        driver.get(product_to_update.edit_url)  # Открываем ссылку для изменения
                         await asyncio.sleep(5)
 
-                        # Ожидаем, что появится элемент с чекбоксом "Скидка"
-                        endirim_checkbox = WebDriverWait(driver, 20).until(
-                            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка')]//preceding-sibling::div"))
-                        )
-
-                        try:
-                            checkmark = endirim_checkbox.find_element(By.XPATH, ".//img[@src='/checkMark.svg?url']")
-                            is_checked = checkmark.is_displayed()
-                        except:
-                            is_checked = False
-
-                        if not is_checked:
-                            print("Галочка 'Скидка' не активна, активируем.")
-                            endirim_checkbox.click()
-
-                        discount_price_input = WebDriverWait(driver, 20).until(
-                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                        )
-
-                        # Вводим новую цену, уменьшенную на 1 копейку
+                        # Обновляем цену
                         new_price = round(lowest_price - 0.01, 2)
+                        discount_price_input = WebDriverWait(driver, 20).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена']"))
+                        )
                         discount_price_input.clear()
                         discount_price_input.send_keys(str(new_price))
+                        print(f"Новая цена товара: {new_price} ₼")
 
-                        print(f"Цена товара обновлена на {new_price} ₼")
-                        await asyncio.sleep(3)
-                        # Ожидаем, что кнопка "Готово" станет доступной
+                        # Сохраняем изменения
                         save_button = WebDriverWait(driver, 30).until(
-                            EC.element_to_be_clickable(
-                                (By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
-                            )
+                            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово']]"))
                         )
-                        await asyncio.sleep(2)
                         save_button.click()
-                        print("Цена успешно обновлена и сохранена.")
+                        print("Цена успешно обновлена на сайте.")
 
-                        # Добавлена задержка после нажатия "Готово"
-                        await asyncio.sleep(10)
+                        # Обновляем цену в базе данных
+                        await update_product_price_in_db(product_to_update, new_price)
 
     except Exception as e:
         logging.error(f"Ошибка при обработке товара: {product[1]}: {e}")
@@ -257,13 +242,10 @@ if __name__ == "__main__":
     try:
         # Входим в Umico Business
         login_to_umico(driver)
-
-        # Создаём и запускаем цикл событий
-        asyncio.run(visit_products(driver))  # Используем asyncio.run для запуска асинхронной функции
-
-    except Exception as e:
-        print(f"Ошибка в основном потоке: {e}")
+        # Запускаем процесс проверки и обновления цен
+        asyncio.run(visit_products(driver))
 
     finally:
+        # Закрываем драйвер после завершения всех операций
         driver.quit()
-        print("Ты красавчик")
+
