@@ -31,8 +31,6 @@ def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
-
-
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
@@ -60,7 +58,6 @@ def login_to_umico(driver):
         logging.error("Ошибка входа!")
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
-    return driver.current_url == "https://business.umico.az/sign-in"
 
 # Функция для закрытия рекламы
 def close_ad(driver):
@@ -159,7 +156,7 @@ def process_product(product):
                 discount_input.clear()
                 discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
                 logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-                sleep(2)
+
                 # Нажимаем на кнопку "Готово" или "Hazır"
                 save_button = WebDriverWait(driver, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
