@@ -1,11 +1,9 @@
 # Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем bash
-RUN apt-get update && apt-get install -y bash
-
-# Устанавливаем зависимости для работы с Chrome
+# Устанавливаем bash и зависимости для работы с Chrome
 RUN apt-get update && apt-get install -y \
+    bash \
     libxss1 \
     libappindicator3-1 \
     fonts-liberation \
@@ -14,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     libatk1.0-0 \
     libgbm1 \
     xdg-utils \
+    wget \
+    curl \
+    unzip \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
@@ -32,7 +33,6 @@ COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
-
 
 # Указываем рабочую директорию
 WORKDIR /app
