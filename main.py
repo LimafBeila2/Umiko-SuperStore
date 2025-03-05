@@ -12,7 +12,6 @@ from queue import Queue
 from threading import Thread, Lock
 import time
 import logging
-
 from time import sleep
 
 # Логирование
@@ -21,8 +20,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Количество потоков (можно увеличить)
 NUM_DRIVERS = 5
 
-
-
+# Настройки Chrome
 def create_driver():
     options = Options()
     options.binary_location = "/usr/bin/chromium"
@@ -30,10 +28,8 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
-    options.add_argument("--remote-debugging-port=9222")  # Включить удаленную отладку
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
-
 
 # Функция загрузки JSON
 def load_json(filename):
