@@ -26,9 +26,6 @@ options.add_argument("--window-size=1920x1080")
 service = Service("/usr/bin/chromedriver")
 driver = webdriver.Chrome(service=service, options=options)
 
-# Указание пути к JSON-файлу
-json_file_path = os.path.join(os.path.dirname(__file__), "products.json")
-
 # Функция загрузки JSON
 def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
@@ -154,7 +151,7 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        process_products_from_json(json_file_path)  # Используем путь к файлу JSON
+        process_products_from_json("product.json")  # Указываем только название файла
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
