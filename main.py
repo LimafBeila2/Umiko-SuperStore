@@ -26,6 +26,9 @@ options.add_argument("--window-size=1920x1080")
 service = Service("/usr/bin/chromedriver")
 driver = webdriver.Chrome(service=service, options=options)
 
+# Указание пути к JSON-файлу
+json_file_path = os.path.join(os.path.dirname(__file__), "products.json")
+
 # Функция загрузки JSON
 def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
@@ -70,7 +73,7 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
-# Функция обработки товаров с улучшенной проверкой цен
+# Функция обработки товаров
 def process_product(driver, product_url, edit_url):
     try:
         logging.info(f"Обрабатываем товар: {product_url}")
@@ -94,10 +97,6 @@ def process_product(driver, product_url, edit_url):
         
         # Анализируем цены продавцов
         product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-        if not product_offers:
-            logging.warning(f"Не найдено предложений для товара {product_url}")
-            return
-        
         lowest_price = float('inf')
         lowest_price_merchant = ""
         super_store_price = None
@@ -116,10 +115,6 @@ def process_product(driver, product_url, edit_url):
                     lowest_price_merchant = merchant
             except:
                 continue
-        
-        if lowest_price == float('inf'):
-            logging.warning(f"Не удалось найти цену для товара {product_url}")
-            return
         
         logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
         if super_store_price is not None:
@@ -159,7 +154,7 @@ def process_products_from_json(json_file):
 if __name__ == "__main__":
     try:
         login_to_umico(driver)
-        process_products_from_json("products.json")
+        process_products_from_json(json_file_path)  # Используем путь к файлу JSON
     except Exception as e:
         logging.error(f"Ошибка: {e}")
     finally:
