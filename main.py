@@ -62,7 +62,7 @@ def login_to_umico(driver):
 # Функция для закрытия рекламы
 def close_ad(driver):
     try:
-        baku_option = WebDriverWait(driver, 30).until(
+        baku_option = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
         baku_option.click()
@@ -82,7 +82,7 @@ def process_product(product):
         close_ad(driver)
         
         try:
-            button = WebDriverWait(driver, 30).until(
+            button = WebDriverWait(driver, 100).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
             )
             button.click()
@@ -90,7 +90,7 @@ def process_product(product):
             logging.warning("Не удалось найти кнопку просмотра цен.")
             return
         
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 100).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
         )
         
@@ -132,7 +132,7 @@ def process_product(product):
             
             try:
                 # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
-                discount_checkbox = WebDriverWait(driver, 10).until(
+                discount_checkbox = WebDriverWait(driver, 100).until(
                     EC.presence_of_element_located((
                         By.XPATH, 
                         "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
@@ -145,7 +145,7 @@ def process_product(product):
                     logging.info("Галочка на скидку поставлена.")
 
                 # Ждем появления поля для ввода скидочной цены (на двух языках)
-                discount_input = WebDriverWait(driver, 10).until(
+                discount_input = WebDriverWait(driver, 100).until(
                     EC.presence_of_element_located((
                         By.XPATH, 
                         "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
@@ -158,7 +158,7 @@ def process_product(product):
                 logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
                 # Нажимаем на кнопку "Готово" или "Hazır"
-                save_button = WebDriverWait(driver, 30).until(
+                save_button = WebDriverWait(driver, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
                 )
                 sleep(2)
@@ -172,7 +172,7 @@ def process_product(product):
         logging.exception(f"Ошибка при обработке товара {product_url}: {e}")
     finally:
         driver.quit()
-        
+
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
