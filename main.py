@@ -129,7 +129,7 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
         sleep(5)
         
         try:
-            discount_checkbox = WebDriverWait(driver, 10).until(
+            discount_checkbox = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
             )
 
@@ -137,7 +137,7 @@ def check_and_update_price(driver, product_url, edit_url, login_needed=False):
                 discount_checkbox.click()
                 logging.info("Галочка на скидку поставлена.")
 
-            discount_input = WebDriverWait(driver, 10).until(
+            discount_input = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
             )
 
