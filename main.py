@@ -21,15 +21,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 NUM_DRIVERS = 5
 
 # Настройки Chrome
-def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920x1080")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
+options = webdriver.ChromeOptions()
+options.add_argument("--disable-dev-shm-usage")  # Использовать /tmp вместо /dev/shm
+options.add_argument("--no-sandbox")  # Отключить sandbox
+options.add_argument("--headless")  # Запуск без GUI
+options.add_argument("--disable-gpu")  # Отключить GPU, если используется headless
+options.add_argument("--remote-debugging-port=9222")  # Включить удаленную отладку
+driver = webdriver.Chrome(options=options)
 
 # Функция загрузки JSON
 def load_json(filename):
