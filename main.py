@@ -151,7 +151,7 @@ def process_products(products, links):
             if super_store_price is not None:
                 logging.info(f"Цена от Super Store: {super_store_price}")
 
-            if super_store_price is not None and lowest_price < super_store_price:
+            if super_store_price is not None and lowest_price < super_store_price or lowest_price == super_store_price:
                 logging.info("Меняем цену...")
                 edit_url = product["edit_url"]
                 driver.get(edit_url)
