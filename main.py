@@ -88,7 +88,7 @@ def process_product(queue, links):
         if product_url in links:
             logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
             queue.task_done()
-            return
+            continue
         
         # Добавляем ссылку в список
         links.append(product_url)
