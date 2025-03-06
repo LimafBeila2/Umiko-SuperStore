@@ -1,6 +1,10 @@
 import json
-from dotenv import load_dotenv
+import threading
+import queue
 import os
+import logging
+from time import sleep
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -8,11 +12,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from time import sleep
-import logging
 
+# Настройки логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Функция загрузки JSON
+def load_json(json_file):
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# Функция для создания драйвера
 def create_driver():
     options = Options()
     options.binary_location = "/usr/bin/chromium"
@@ -23,14 +32,7 @@ def create_driver():
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
 
-def load_json(filename):
-    with open(filename, "r", encoding="utf-8") as file:
-        return json.load(file)
-
-def save_links_to_json(filename, links):
-    with open(filename, "w", encoding="utf-8") as file:
-        json.dump(links, file, ensure_ascii=False, indent=4)
-
+# Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
     username = os.getenv("UMICO_USERNAME")
@@ -40,17 +42,17 @@ def login_to_umico(driver):
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
     driver.get("https://business.umico.az/sign-in")
-    login_input = WebDriverWait(driver, 60).until(
+    login_input = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
     login_input.send_keys(username)
-
+    
     password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
     password_input.send_keys(password)
     password_input.send_keys(Keys.RETURN)
-
+    
     try:
-        WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
+        WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
         sleep(3)
         logging.info("Успешный вход в Umico Business!")
     except:
@@ -58,9 +60,10 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
+# Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
-        baku_option = WebDriverWait(driver, 10).until(
+        baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
         baku_option.click()
@@ -68,107 +71,136 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
-def process_products(products, links):
-    driver = create_driver()
+# Функция для проверки самой низкой цены и изменения цены, если нужно
+def check_and_update_price(driver, product_url, edit_url, login_needed=False):
+    if login_needed:
+        login_to_umico(driver)  # Авторизация, если требуется
+
+    driver.get(product_url)
+    sleep(2)
+    close_ad(driver)
 
     try:
-        login_to_umico(driver)
+        # Обновленный XPath для кнопки "Bütün satıcıların qiymətlərinə baxmaq"
+        button = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+        )
+        button.click()
+    except:
+        logging.warning("Не удалось найти кнопку просмотра цен.")
+        return
 
-        for product in products:
-            product_url = product["product_url"]
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductPricesOtherSellers"))
+    )
 
-            if product_url in links:
-                logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+    # Извлекаем все предложения от других продавцов
+    product_offers = driver.find_elements(By.CLASS_NAME, "MPProductPricesOtherSellers-List")
+    if not product_offers:
+        logging.warning("Нет предложений по этому товару.")
+        return
+    
+    lowest_price = float('inf')
+    lowest_price_merchant = ""
+    super_store_price = None
+
+    for offer in product_offers:
+        try:
+            # Извлекаем цену и продавца
+            price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
+            price_text_cleaned = price_text.replace("₼", "").strip()
+            if not price_text_cleaned:
                 continue
+            price = float(price_text_cleaned)
 
-            links.append(product_url)
-            save_links_to_json("links.json", links)
+            merchant = offer.find_element(By.XPATH, ".//span[@class='text-[11px] !text-[#50557a] !font-bold']").text.strip()
 
-            logging.info(f"Обрабатываем товар: {product_url}")
-            driver.get(product_url)
-            sleep(2)
-            close_ad(driver)
+            if merchant == "Super Store":
+                super_store_price = price
+            if price < lowest_price:
+                lowest_price = price
+                lowest_price_merchant = merchant
+        except Exception as e:
+            logging.warning(f"Ошибка при обработке предложения: {e}")
+            continue
 
-            try:
-                button = WebDriverWait(driver, 100).until(
-                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
-                )
-                button.click()
-            except:
-                logging.warning("Не удалось найти кнопку просмотра цен.")
-                continue
+    logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
+    if super_store_price is not None:
+        logging.info(f"Цена от Super Store: {super_store_price}")
 
-            WebDriverWait(driver, 100).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
+    if super_store_price is not None and lowest_price < super_store_price:
+        logging.info("Меняем цену...")
+        driver.get(edit_url)
+        sleep(5)
+
+        try:
+            discount_checkbox = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
             )
 
-            product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-            if not product_offers:
-                logging.warning("Нет предложений по этому товару.")
-                continue
+            if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                discount_checkbox.click()
+                logging.info("Галочка на скидку поставлена.")
 
-            lowest_price = float('inf')
-            lowest_price_merchant = ""
-            super_store_price = None
+            discount_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+            )
 
-            for offer in product_offers:
-                try:
-                    merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                    price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
-                    price = float(price_text.replace("₼", "").strip())
+            discount_input.clear()
+            discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+            logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                    if merchant == "Super Store":
-                        super_store_price = price
+            save_button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+            )
+            sleep(2)
+            save_button.click()
+            logging.info("Цена обновлена!")
+            sleep(10)
+        except Exception as e:
+            logging.error(f"Ошибка при установке скидочной цены: {e}")
 
-                    if price < lowest_price:
-                        lowest_price = price
-                        lowest_price_merchant = merchant
-                except Exception as e:
-                    logging.warning(f"Ошибка при обработке предложения: {e}")
-                    continue
+# Функция обработки одного товара
+def process_product(q):
+    driver = create_driver()
+    try:
+        while not q.empty():
+            product = q.get()
+            product_url, edit_url, login_needed = product["product_url"], product["edit_url"], product.get("login_needed", False)
+            logging.info(f"Обрабатываем товар: {product_url}")
+            check_and_update_price(driver, product_url, edit_url, login_needed)
 
-            logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
-            if super_store_price is not None:
-                logging.info(f"Цена от Super Store: {super_store_price}")
-
-            if super_store_price is not None and lowest_price_merchant == "Super Store":
-                logging.info("Super Store уже предлагает самую низкую цену. Изменение не требуется.")
-                continue
-
-            if super_store_price is not None and lowest_price < super_store_price:
-                logging.info("Меняем цену...")
-                edit_url = product["edit_url"]
-                driver.get(edit_url)
-                sleep(5)
-
-                try:
-                    discount_input = WebDriverWait(driver, 100).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-                    save_button = WebDriverWait(driver, 100).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
-                    ))
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(10)
-                except Exception as e:
-                    logging.error(f"Ошибка при установке скидочной цены: {e}")
+            while True:
+                logging.info(f"Проверяем цену товара {product_url} каждую минуту...")
+                check_and_update_price(driver, product_url, edit_url, login_needed)
+                sleep(60)
+            q.task_done()
+    except Exception as e:
+        logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
         driver.quit()
 
+# Функция для запуска потоков
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    links = []
+    q = queue.Queue()
 
-    if os.path.exists("links.json"):
-        links = load_json("links.json")
+    for product in products:
+        q.put(product)
 
-    process_products(products, links)
-    logging.info("Работа завершена!")
+    threads = []
+    num_threads = 2  # Запускаем 2 потока
+
+    for _ in range(num_threads):
+        thread = threading.Thread(target=process_product, args=(q,))
+        threads.append(thread)
+        thread.start()
+
+    q.join()
+
+    for thread in threads:
+        thread.join()
 
 if __name__ == "__main__":
     process_products_from_json("product.json")
+    logging.info("Работа завершена!")
