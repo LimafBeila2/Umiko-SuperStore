@@ -1,6 +1,7 @@
 import json
 from dotenv import load_dotenv
 import os
+import threading
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -10,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import logging
+from queue import Queue
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -49,11 +51,11 @@ def login_to_umico(driver):
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
     login_input.send_keys(username)
-
+    
     password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
     password_input.send_keys(password)
     password_input.send_keys(Keys.RETURN)
-
+    
     try:
         WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
         sleep(3)
@@ -75,29 +77,28 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки товаров
-def process_products(products, links):
-    driver = create_driver()
-
-    try:
-        login_to_umico(driver)
-
-        for product in products:
-            product_url = product["product_url"]
-
-            # Проверка, если ссылка уже сохранена, пропустить
-            if product_url in links:
-                logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
-                continue
-
-            # Добавляем ссылку в список
-            links.append(product_url)
-            save_links_to_json("links.json", links)
-
+def process_product(queue, links):
+    while not queue.empty():
+        product = queue.get()
+        product_url = product["product_url"]
+        
+        if product_url in links:
+            logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+            queue.task_done()
+            continue
+        
+        links.append(product_url)
+        save_links_to_json("links.json", links)
+        
+        driver = create_driver()
+        try:
+            login_to_umico(driver)
+            edit_url = product["edit_url"]
             logging.info(f"Обрабатываем товар: {product_url}")
             driver.get(product_url)
             sleep(2)
             close_ad(driver)
-
+            
             try:
                 button = WebDriverWait(driver, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
@@ -106,110 +107,79 @@ def process_products(products, links):
             except:
                 logging.warning("Не удалось найти кнопку просмотра цен.")
                 continue
-
+            
             WebDriverWait(driver, 100).until(
                 EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
             )
-
+            
             product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
             if not product_offers:
                 logging.warning("Нет предложений по этому товару.")
                 continue
-
+            
             lowest_price = float('inf')
             lowest_price_merchant = ""
             super_store_price = None
-
+            
             for offer in product_offers:
                 try:
-                    # Извлечение названия магазина
                     merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-
-                    # Извлечение основной цены товара (старая цена)
-                    price_text = offer.find_element(By.XPATH, "//span[@data-info='item-desc-price-new' or @data-info='item-desc-price-old']").text.strip()
+                    
+                    price_text = ""
+                    try:
+                        price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip()
+                    except:
+                        pass
+                    
+                    if not price_text:
+                        price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
+                    
                     price_text_cleaned = price_text.replace("₼", "").strip()
-
-
                     if not price_text_cleaned:
                         continue
-
+                    
                     price = float(price_text_cleaned)
-
-                    # Если магазин "Super Store", запоминаем цену
+                    
                     if merchant == "Super Store":
                         super_store_price = price
-
-                    # Проверка на самую низкую цену
+                    
                     if price < lowest_price:
                         lowest_price = price
                         lowest_price_merchant = merchant
                 except Exception as e:
                     logging.warning(f"Ошибка при обработке предложения: {e}")
                     continue
-
+            
             logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
             if super_store_price is not None:
                 logging.info(f"Цена от Super Store: {super_store_price}")
-
-            if super_store_price is not None and lowest_price < super_store_price or lowest_price == super_store_price:
-                logging.info("Меняем цену...")
-                edit_url = product["edit_url"]
-                driver.get(edit_url)
-                sleep(5)
-
-                try:
-                    discount_checkbox = WebDriverWait(driver, 100).until(
-                        EC.presence_of_element_located((
-                            By.XPATH,
-                            "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-                        ))
-                    )
-
-                    # Если галочка не установлена, ставим её
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    # Ждем появления поля для ввода скидочной цены (на двух языках)
-                    discount_input = WebDriverWait(driver, 100).until(
-                        EC.presence_of_element_located((
-                            By.XPATH,
-                            "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-                        ))
-                    )
-
-                    # Устанавливаем новую цену
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-
-                    # Нажимаем на кнопку "Готово" или "Hazır"
-                    save_button = WebDriverWait(driver, 100).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(10)
-                except Exception as e:
-                    logging.error(f"Ошибка при установке скидочной цены: {e}")
-
-    except Exception as e:
-        logging.exception(f"Ошибка при обработке товаров: {e}")
-    finally:
-        driver.quit()
+            
+        finally:
+            driver.quit()
+            queue.task_done()
 
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    links = []  # Список для хранения ссылок
-
-    # Загружаем уже сохраненные ссылки, если файл существует
+    queue = Queue()
+    links = []
+    
     if os.path.exists("links.json"):
         links = load_json("links.json")
-
-    process_products(products, links)
-
+    
+    for product in products:
+        queue.put(product)
+    
+    num_threads = 1
+    threads = []
+    for _ in range(num_threads):
+        thread = threading.Thread(target=process_product, args=(queue, links))
+        thread.start()
+        threads.append(thread)
+    
+    for thread in threads:
+        thread.join()
+    
     logging.info("Работа завершена!")
 
 if __name__ == "__main__":
