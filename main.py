@@ -176,7 +176,7 @@ def process_product(product):
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         executor.map(process_product, products)
 
 if __name__ == "__main__":
