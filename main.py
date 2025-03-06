@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import logging
 from time import sleep
-
+from bs4 import BeautifulSoup
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -66,10 +66,9 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
-# Функция закрытия рекламы и выбора города
-def close_ad_and_select_city(driver):
+# Функция закрытия рекламы
+def close_ad(driver):
     try:
-        # Ждем, пока появится окно выбора города
         baku_option = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
@@ -81,15 +80,33 @@ def close_ad_and_select_city(driver):
 # Асинхронная функция для получения цен с товаров
 async def get_product_price(session, url):
     try:
+        # Отправка GET-запроса
         async with session.get(url) as response:
             html = await response.text()
-            # Здесь необходимо парсить цену с HTML
-            # Например, можно использовать регулярные выражения или BeautifulSoup для извлечения цены
-            price = 100.0  # Замени на реальную логику извлечения цены
-            return price
+            
+            # Парсим HTML с помощью BeautifulSoup
+            soup = BeautifulSoup(html, 'html.parser')
+
+            # Извлечение новой цены
+            new_price_element = soup.find('span', {'data-info': 'item-desc-price-new'})
+            if new_price_element:
+                new_price = float(new_price_element.text.strip().replace(' ₼', '').replace(',', '.'))
+            else:
+                new_price = None
+
+            # Извлечение старой цены
+            old_price_element = soup.find('span', {'data-info': 'item-desc-price-old'})
+            if old_price_element:
+                old_price = float(old_price_element.text.strip().replace(' ₼', '').replace(',', '.'))
+            else:
+                old_price = None
+
+            # Возвращаем обе цены
+            return new_price, old_price
+
     except Exception as e:
         logging.warning(f"Ошибка при получении цены с {url}: {e}")
-        return None
+        return None, None
 
 # Функция для обработки товаров
 def process_products(products, links):
@@ -97,118 +114,95 @@ def process_products(products, links):
     try:
         login_to_umico(driver)
 
-        for i in range(0, len(products), 10):  # Загружаем 10 ссылок за раз
-            batch = products[i:i+10]
-            
-            for product in batch:
-                product_url = product["product_url"]
+        for product in products:
+            product_url = product["product_url"]
 
-                # Проверка, если ссылка уже сохранена, пропустить
-                if product_url in links:
-                    logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+            # Проверка, если ссылка уже сохранена, пропускаем
+            if product_url in links:
+                logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+                continue
+
+            # Добавляем ссылку в список
+            links.append(product_url)
+            save_links_to_json("links.json", links)
+
+            logging.info(f"Обрабатываем товар: {product_url}")
+            driver.get(product_url)
+            sleep(2)
+            close_ad(driver)
+
+            product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
+            if not product_offers:
+                logging.warning("Нет предложений по этому товару.")
+                continue
+
+            lowest_price = float('inf')
+            lowest_price_merchant = ""
+            super_store_price = None
+
+            # Асинхронно собираем цены с предложений
+            async def get_prices_from_offers():
+                async with aiohttp.ClientSession() as session:
+                    prices = await asyncio.gather(
+                        *[get_product_price(session, offer.get_attribute("href")) for offer in product_offers]
+                    )
+                return prices
+
+            prices = asyncio.run(get_prices_from_offers())
+
+            for offer, price_tuple in zip(product_offers, prices):
+                new_price, old_price = price_tuple
+                if new_price is None:
                     continue
 
-                # Добавляем ссылку в список
-                links.append(product_url)
-                save_links_to_json("links.json", links)
+                merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
 
-            logging.info(f"Загружаем ссылки: {', '.join([p['product_url'] for p in batch])}")
-            # Загружаем все ссылки
-            for product in batch:
-                driver.get(product["product_url"])
-                sleep(10)  # Ждем 10 секунд, чтобы страница прогрузилась
+                # Если магазин "Super Store", запоминаем цену
+                if merchant == "Super Store":
+                    super_store_price = new_price
 
-            close_ad_and_select_city(driver)  # Выбираем город Баку
+                # Проверка на самую низкую цену
+                if new_price < lowest_price:
+                    lowest_price = new_price
+                    lowest_price_merchant = merchant
 
-            # Парсим цены
-            for product in batch:
-                product_url = product["product_url"]
-                logging.info(f"Обрабатываем товар: {product_url}")
+            logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
+            if super_store_price is not None:
+                logging.info(f"Цена от Super Store: {super_store_price}")
+
+            if super_store_price is not None and lowest_price < super_store_price:
+                logging.info("Меняем цену...")
+
+                edit_url = product["edit_url"]
+                driver.get(edit_url)
+                sleep(5)
 
                 try:
-                    button = WebDriverWait(driver, 100).until(
-                        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+                    discount_checkbox = WebDriverWait(driver, 100).until(
+                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                     )
-                    button.click()
-                except:
-                    logging.warning("Не удалось найти кнопку просмотра цен.")
-                    continue
 
-                WebDriverWait(driver, 100).until(
-                    EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
-                )
+                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                        discount_checkbox.click()
+                        logging.info("Галочка на скидку поставлена.")
 
-                product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-                if not product_offers:
-                    logging.warning("Нет предложений по этому товару.")
-                    continue
+                    discount_input = WebDriverWait(driver, 100).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                    )
 
-                lowest_price = float('inf')
-                lowest_price_merchant = ""
-                super_store_price = None
+                    discount_input.clear()
+                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                # Асинхронно собираем цены с предложений
-                async def get_prices_from_offers():
-                    async with aiohttp.ClientSession() as session:
-                        prices = await asyncio.gather(
-                            *[get_product_price(session, offer.get_attribute("href")) for offer in product_offers]
-                        )
-                    return prices
-
-                prices = asyncio.run(get_prices_from_offers())
-
-                for offer, price in zip(product_offers, prices):
-                    if price is None:
-                        continue
-
-                    merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-
-                    # Если магазин "Super Store", запоминаем цену
-                    if merchant == "Super Store":
-                        super_store_price = price
-
-                    # Проверка на самую низкую цену
-                    if price < lowest_price:
-                        lowest_price = price
-                        lowest_price_merchant = merchant
-
-                logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
-                if super_store_price is not None:
-                    logging.info(f"Цена от Super Store: {super_store_price}")
-
-                if super_store_price is not None and lowest_price < super_store_price:
-                    logging.info("Меняем цену...")
-
-                    edit_url = product["edit_url"]
-                    driver.get(edit_url)
-                    sleep(5)
-
-                    try:
-                        discount_checkbox = WebDriverWait(driver, 100).until(
-                            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                        )
-
-                        if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                            discount_checkbox.click()
-                            logging.info("Галочка на скидку поставлена.")
-
-                        discount_input = WebDriverWait(driver, 100).until(
-                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                        )
-
-                        discount_input.clear()
-                        discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                        logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-
-                        save_button = WebDriverWait(driver, 100).until(
-                            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                        )
-                        sleep(2)
-                        save_button.click()
-                        logging.info("Цена обновлена!")
-                        sleep(10)
-                    except Exception as e:
-                        logging.error(f"Ошибка при установке скидочной цены: {e}")
+                    save_button = WebDriverWait(driver, 100).until(
+                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                    )
+                    sleep(2)
+                    save_button.click()
+                    logging.info("Цена обновлена!")
+                    sleep(10)
+                except Exception as e:
+                    logging.error(f"Ошибка при установке скидочной цены: {e}")
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товаров: {e}")
