@@ -32,6 +32,11 @@ def load_json(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
+# Функция сохранения ссылок в JSON
+def save_links_to_json(filename, links):
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(links, file, ensure_ascii=False, indent=4)
+
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
@@ -72,13 +77,25 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки товаров
-def process_product(queue):
+def process_product(queue, links):
     while not queue.empty():
         product = queue.get()  # Берем задачу из очереди
+        product_url = product["product_url"]
+        
+        # Проверка, если ссылка уже сохранена, пропустить
+        if product_url in links:
+            logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+            queue.task_done()
+            return
+        
+        # Добавляем ссылку в список
+        links.append(product_url)
+        save_links_to_json("links.json", links)
+        
         driver = create_driver()
         try:
             login_to_umico(driver)
-            product_url, edit_url = product["product_url"], product["edit_url"]
+            edit_url = product["edit_url"]
             logging.info(f"Обрабатываем товар: {product_url}")
             driver.get(product_url)
             sleep(2)
@@ -180,6 +197,11 @@ def process_product(queue):
 def process_products_from_json(json_file):
     products = load_json(json_file)
     queue = Queue()
+    links = []  # Список для хранения ссылок
+    
+    # Загружаем уже сохраненные ссылки, если файл существует
+    if os.path.exists("links.json"):
+        links = load_json("links.json")
     
     # Добавляем все товары в очередь
     for product in products:
@@ -189,7 +211,7 @@ def process_products_from_json(json_file):
     num_threads = 5  # Количество потоков, вы можете менять это значение
     threads = []
     for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(queue,))
+        thread = threading.Thread(target=process_product, args=(queue, links))
         thread.start()
         threads.append(thread)
 
