@@ -13,6 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import logging
 from time import sleep
 
+
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
