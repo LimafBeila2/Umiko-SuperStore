@@ -1,7 +1,6 @@
 import json
 from dotenv import load_dotenv
 import os
-import threading
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -11,7 +10,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import logging
-from queue import Queue
 
 # Логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -77,25 +75,24 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки товаров
-def process_product(queue, links):
-    while not queue.empty():
-        product = queue.get()  # Берем задачу из очереди
-        product_url = product["product_url"]
+def process_products(products, links):
+    driver = create_driver()
+    
+    try:
+        login_to_umico(driver)
         
-        # Проверка, если ссылка уже сохранена, пропустить
-        if product_url in links:
-            logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
-            queue.task_done()
-            return
-        
-        # Добавляем ссылку в список
-        links.append(product_url)
-        save_links_to_json("links.json", links)
-        
-        driver = create_driver()
-        try:
-            login_to_umico(driver)
-            edit_url = product["edit_url"]
+        for product in products:
+            product_url = product["product_url"]
+            
+            # Проверка, если ссылка уже сохранена, пропустить
+            if product_url in links:
+                logging.info(f"Ссылка {product_url} уже добавлена, пропускаем...")
+                continue
+            
+            # Добавляем ссылку в список
+            links.append(product_url)
+            save_links_to_json("links.json", links)
+            
             logging.info(f"Обрабатываем товар: {product_url}")
             driver.get(product_url)
             sleep(2)
@@ -108,7 +105,7 @@ def process_product(queue, links):
                 button.click()
             except:
                 logging.warning("Не удалось найти кнопку просмотра цен.")
-                return
+                continue
             
             WebDriverWait(driver, 100).until(
                 EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
@@ -117,7 +114,7 @@ def process_product(queue, links):
             product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
             if not product_offers:
                 logging.warning("Нет предложений по этому товару.")
-                return
+                continue
             
             lowest_price = float('inf')
             lowest_price_merchant = ""
@@ -146,11 +143,11 @@ def process_product(queue, links):
             
             if super_store_price is not None and lowest_price < super_store_price:
                 logging.info("Меняем цену...")
+                edit_url = product["edit_url"]
                 driver.get(edit_url)
                 sleep(5)
                 
                 try:
-                    # Находим элемент с чекбоксом "Скидка" или "Endirim" (для двух языков)
                     discount_checkbox = WebDriverWait(driver, 100).until(
                         EC.presence_of_element_located((
                             By.XPATH, 
@@ -186,41 +183,24 @@ def process_product(queue, links):
                     sleep(10)
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
-                
-        except Exception as e:
-            logging.exception(f"Ошибка при обработке товара {product['product_url']}: {e}")
-        finally:
-            driver.quit()
-            queue.task_done()  # Завершаем обработку задачи
+            
+    except Exception as e:
+        logging.exception(f"Ошибка при обработке товаров: {e}")
+    finally:
+        driver.quit()
 
 # Основная функция работы с JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    queue = Queue()
     links = []  # Список для хранения ссылок
     
     # Загружаем уже сохраненные ссылки, если файл существует
     if os.path.exists("links.json"):
         links = load_json("links.json")
     
-    # Добавляем все товары в очередь
-    for product in products:
-        queue.put(product)
-
-    # Создаем потоки, каждый из которых будет обрабатывать задачи
-    num_threads = 4  # Количество потоков, вы можете менять это значение
-    threads = []
-    for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(queue, links))
-        thread.start()
-        threads.append(thread)
-
-    # Ожидаем завершения всех задач
-    for thread in threads:
-        thread.join()
+    process_products(products, links)
 
     logging.info("Работа завершена!")
 
 if __name__ == "__main__":
     process_products_from_json("product.json")
-    
