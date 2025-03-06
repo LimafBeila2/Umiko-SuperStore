@@ -76,6 +76,32 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
+# Функция для изменения цены на товар
+def change_price(driver, edit_url, new_price):
+    driver.get(edit_url)
+    try:
+        # Ждем загрузки поля для изменения цены
+        price_input = WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiymət']"))
+        )
+        # Очищаем текущее поле цены
+        price_input.clear()
+        # Вводим новую цену
+        price_input.send_keys(str(new_price))
+        
+        # Найдем кнопку для сохранения
+        save_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Yadda saxla')]")
+        save_button.click()
+        
+        # Ждем подтверждения изменений
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Dəyişikliklər yadda saxlanılıb')]"))
+        )
+        logging.info(f"Цена успешно обновлена на {new_price}!")
+    except Exception as e:
+        logging.error(f"Ошибка при изменении цены: {e}")
+        driver.quit()
+
 # Функция обработки товаров
 def process_product(queue, links):
     while not queue.empty():
@@ -153,6 +179,11 @@ def process_product(queue, links):
             logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
             if super_store_price is not None:
                 logging.info(f"Цена от Super Store: {super_store_price}")
+            
+            # Если цена не наша, меняем её
+            if lowest_price_merchant != "Super Store" and super_store_price is not None and super_store_price != lowest_price:
+                logging.info(f"Цена не наша, меняем на {super_store_price}")
+                change_price(driver, edit_url, super_store_price)
             
         finally:
             driver.quit()
