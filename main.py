@@ -12,6 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Настройки логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -22,6 +23,8 @@ def load_json(json_file):
         return json.load(f)
 
 # Функция для создания драйвера
+
+# Настройки Chrome
 def create_driver():
     options = Options()
     options.binary_location = "/usr/bin/chromium"
@@ -31,6 +34,7 @@ def create_driver():
     options.add_argument("--window-size=1920x1080")
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
+
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -63,6 +67,7 @@ def login_to_umico(driver):
 # Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
+        # Здесь добавляется возможность выбора города "Баку"
         baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
@@ -112,10 +117,26 @@ def process_product(q):
             for offer in product_offers:
                 try:
                     merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                    price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
-                    price_text_cleaned = price_text.replace("₼", "").strip()
-                    if not price_text_cleaned:
-                        continue
+                    
+                    price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
+                    price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
+                    
+                    # Выбираем минимальную цену, если оба атрибута найдены
+                    price_text = None
+                    if price_text_old and price_text_new:
+                        price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
+
+
+                    elif price_text_old:
+                        price_text = price_text_old
+                    elif price_text_new:
+                        price_text = price_text_new
+                    # Если цена найдена, очищаем и конвертируем её в число
+                    if price_text:
+                        price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
+                        if not price_text_cleaned:
+                            continue
+                        
                     price = float(price_text_cleaned)
                     if merchant == "Super Store":
                         super_store_price = price
@@ -129,6 +150,10 @@ def process_product(q):
             logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
             if super_store_price is not None:
                 logging.info(f"Цена от Super Store: {super_store_price}")
+
+            if lowest_price <= 80:
+                logging.info(f"Самая низкая цена ({lowest_price}₼) слишком низкая, пропускаем товар.")
+                continue
             
             if super_store_price is not None and lowest_price < super_store_price:
                 logging.info("Меняем цену...")
@@ -137,10 +162,7 @@ def process_product(q):
                 
                 try:
                     discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((
-                            By.XPATH, 
-                            "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-                        ))
+                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                     )
 
                     if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
@@ -148,10 +170,7 @@ def process_product(q):
                         logging.info("Галочка на скидку поставлена.")
 
                     discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((
-                            By.XPATH, 
-                            "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-                        ))
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                     )
 
                     discount_input.clear()
@@ -175,26 +194,8 @@ def process_product(q):
         driver.quit()
 
 # Функция для запуска потоков
-def process_products_from_json(json_file):
-    products = load_json(json_file)
-    q = queue.Queue()
-
-    for product in products:
-        q.put(product)
-
-    threads = []
-    num_threads = min(2, len(products))  # Запускаем не больше 10 потоков
-
-    for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(q,))
-        threads.append(thread)
-        thread.start()
-
-    q.join()
-
-    for thread in threads:
-        thread.join()
 
 if __name__ == "__main__":
-    process_products_from_json("product.json")
-    logging.info("Работа завершена!")
+    while True:
+        logging.info("Работа завершена! Перезапуск через 1 секунду...")
+        sleep(1)
