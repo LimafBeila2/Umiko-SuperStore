@@ -186,7 +186,7 @@ def process_products_from_json(json_file):
         queue.put(product)
 
     # Создаем потоки, каждый из которых будет обрабатывать задачи
-    num_threads = 3  # Количество потоков, вы можете менять это значение
+    num_threads = 5  # Количество потоков, вы можете менять это значение
     threads = []
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(queue,))
