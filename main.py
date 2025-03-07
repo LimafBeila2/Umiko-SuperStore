@@ -18,12 +18,12 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
-    # Убедитесь, что путь к драйверу правильный
-    service = Service(executable_path="/usr/bin/chromedriver")
+    # Используем ChromeDriverManager для автоматической установки драйвера
+    service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
-# Функция входа в Umico Business
+# Функция для авторизации
 def login_to_umico(driver):
     load_dotenv()
     username = os.getenv("UMICO_USERNAME")
@@ -67,8 +67,6 @@ def close_ad(driver):
 def process_product(product):
     driver = create_driver()
     try:
-        login_to_umico(driver)
-
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Обрабатываем товар: {product_url}")
         driver.get(product_url)
@@ -111,7 +109,6 @@ def process_product(product):
                 if price_text_old and price_text_new:
                     price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
 
-
                 elif price_text_old:
                     price_text = price_text_old
                 elif price_text_new:
@@ -143,6 +140,10 @@ def process_product(product):
         
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
+
+            # Авторизация перед переходом на страницу редактирования
+            login_to_umico(driver)
+
             driver.get(edit_url)
             logging.info(f"Открыта страница изменения цены: {edit_url}")
  
@@ -197,4 +198,4 @@ if __name__ == "__main__":
     while True:
         process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
-        sleep(10)  # Пауза перед повторным запуском
+        sleep(60)  # Пауза перед повторным запуском
