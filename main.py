@@ -12,15 +12,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+# Вместо жесткого указания пути, используем webdriver_manager
 def create_driver():
     options = Options()
     options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
-    # Используем ChromeDriverManager для автоматической установки драйвера
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+    # Используем webdriver_manager для автоматической загрузки актуального драйвера
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     return driver
 
 # Функция для авторизации
