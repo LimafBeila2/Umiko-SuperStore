@@ -16,23 +16,27 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # Настройки логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Функция для создания драйвера
+def create_driver():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # если не хотите видеть браузер
+    # Указываем путь к ChromeDriver
+    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
 
-# Функция загрузки JSON
-def load_json(json_file):
-    with open(json_file, "r", encoding="utf-8") as f:
-        return json.load(f)
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 
 # Настройки Chrome
 def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920x1080")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Запуск в безголовом режиме
+
+    # Указываем путь к ChromeDriver
+    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
+
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -122,7 +126,7 @@ def process_product(q):
                     # Выбираем минимальную цену, если оба атрибута найдены
                     price_text = None
                     if price_text_old and price_text_new:
-                        price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace("", "").strip()))  # Убираем пробелы
+                        price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
 
 
                     elif price_text_old:
@@ -131,7 +135,7 @@ def process_product(q):
                         price_text = price_text_new
                     # Если цена найдена, очищаем и конвертируем её в число
                     if price_text:
-                        price_text_cleaned = price_text.replace("₼", "").replace("", "").strip()
+                        price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
                         if not price_text_cleaned:
                             continue
                         
@@ -158,7 +162,6 @@ def process_product(q):
                 driver.get(edit_url)
                 logging.info(f"Открыта страница изменения цены: {edit_url}")
  
-    
                 # Логируем текущий URL после загрузки страницы
                 logging.info(f"Текущий URL: {driver.current_url}")
                 
@@ -204,7 +207,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(1, len(products))  # Запускаем не больше 10 потоков
+    num_threads = min(1, len(products))  # Запускаем не больше 3 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
@@ -215,7 +218,10 @@ def process_products_from_json(json_file):
 
     for thread in threads:
         thread.join()
-sleep(2)
+
+# Бесконечный цикл
 if __name__ == "__main__":
-    process_products_from_json("product.json")
-    logging.info("Работа завершена!")
+    while True:
+        process_products_from_json("product.json")
+        logging.info("Работа завершена, повторная обработка через 60 секунд...")
+        sleep(10)  # Пауза перед повторным запуском
