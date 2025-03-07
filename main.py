@@ -16,16 +16,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # Настройки логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-# Функция для создания драйвера
 
-
-def load_json(file_path):
-    try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except Exception as e:
-        logging.error(f"Ошибка загрузки JSON: {e}")
-        return []
+# Функция загрузки JSON
+def load_json(json_file):
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 # Настройки Chrome
 def create_driver():
@@ -79,7 +74,6 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
-# Функция обработки одного товара
 def process_product(q):
     driver = create_driver()
     try:
@@ -167,10 +161,12 @@ def process_product(q):
                 logging.info(f"Текущий URL: {driver.current_url}")
                 
                 try:
+                    # Обновляем XPath для нахождения чекбокса скидки
                     discount_checkbox = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                     )
 
+                    # Проверяем, активен ли чекбокс скидки
                     if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
                         discount_checkbox.click()
                         logging.info("Галочка на скидку поставлена.")
@@ -183,6 +179,7 @@ def process_product(q):
                     discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
                     logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
 
+                    # Нажимаем на кнопку "Готово" или "Hazır"
                     save_button = WebDriverWait(driver, 30).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
                     )
@@ -208,7 +205,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(1, len(products))  # Запускаем не больше 3 потоков
+    num_threads = min(2, len(products))  # Запускаем не больше 2 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
