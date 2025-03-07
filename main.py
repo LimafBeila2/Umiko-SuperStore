@@ -12,16 +12,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Вместо жесткого указания пути, используем webdriver_manager
 def create_driver():
     options = Options()
     options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
-    # Используем webdriver_manager для автоматической загрузки актуального драйвера
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-    return driver
+    # Убедитесь, что путь к драйверу правильный
+    service = Service(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver  # Возвращаем созданный драйвер
 
 # Функция для авторизации
 def login_to_umico(driver):
