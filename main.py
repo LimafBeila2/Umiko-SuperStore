@@ -176,8 +176,8 @@ def process_product(q):
                     )
 
                     discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
+                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
 
                     save_button = WebDriverWait(driver, 30).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
