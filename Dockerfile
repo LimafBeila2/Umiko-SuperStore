@@ -16,6 +16,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     chromium \
     chromium-driver \
+    libx11-6 \
+    libglib2.0-0 \
+    libnss3 \
+    libgdk-pixbuf2.0-0 \
+    libatk1.0-0 \
+    libgtk-3-0 \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
