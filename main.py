@@ -15,17 +15,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Настройки логирования
-# Настройки Chrome
-def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920x1080")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Функция для создания драйвера
 
 
 # Настройки Chrome
