@@ -19,6 +19,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Функция для создания драйвера
 
 
+def load_json(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except Exception as e:
+        logging.error(f"Ошибка загрузки JSON: {e}")
+        return []
+
 # Настройки Chrome
 def create_driver():
     options = Options()
