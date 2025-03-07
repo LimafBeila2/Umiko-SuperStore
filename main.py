@@ -13,19 +13,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Настройки логирования
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
 def create_driver():
     options = Options()
-    options.add_argument("--headless")  # Для запуска без GUI
+    options.add_argument("--headless")  # Это для запуска без GUI, если не нужно
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
     
-    # Скачиваем и используем драйвер автоматически
-    service = Service(ChromeDriverManager().install())
+    # Указываем версию браузера вручную, если нужно
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="134.0.6998.35").install()), options=options)
     
-    return webdriver.Chrome(service=service, options=options)
-
+    return driver
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
