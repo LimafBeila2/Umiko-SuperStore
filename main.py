@@ -21,6 +21,7 @@ def create_driver():
     # Убедитесь, что путь к драйверу правильный
     service = Service(executable_path="/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
