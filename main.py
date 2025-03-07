@@ -24,13 +24,13 @@ def load_json(json_file):
 
 # Функция для создания драйвера
 def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # если не хотите видеть браузер
+    # Указываем путь к ChromeDriver
+    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
+
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -41,7 +41,6 @@ def login_to_umico(driver):
     if not username or not password:
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
-    driver.get("https://business.umico.az/sign-in")
     login_input = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
@@ -155,9 +154,12 @@ def process_product(q):
                 logging.info("Меняем цену...")
                 driver.get(edit_url)
                 sleep(5)
-                
+                # Проверяем, редиректнуло ли нас на страницу входа
+                if "business.umico.az/new/sign-i" in driver.current_url:
+                    logging.info("Привет, угадал!")
+
                 try:
-                    discount_checkbox = WebDriverWait(driver, 60).until(
+                    discount_checkbox = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                     )
 
@@ -165,7 +167,7 @@ def process_product(q):
                         discount_checkbox.click()
                         logging.info("Галочка на скидку поставлена.")
 
-                    discount_input = WebDriverWait(driver, 60).until(
+                    discount_input = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                     )
 
@@ -173,7 +175,7 @@ def process_product(q):
                     discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
                     logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                    save_button = WebDriverWait(driver, 60).until(
+                    save_button = WebDriverWait(driver, 30).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
                     )
                     sleep(2)
@@ -198,7 +200,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(1, len(products))  # Запускаем не больше 10 потоков
+    num_threads = min(3, len(products))  # Запускаем не больше 10 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
