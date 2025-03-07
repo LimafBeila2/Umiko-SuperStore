@@ -1,6 +1,4 @@
 import json
-import threading
-import queue
 import os
 import logging
 from time import sleep
@@ -73,151 +71,137 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
-def process_product(q):
+# Обработка товара
+def process_product(product, driver):
+    try:
+        product_url, edit_url = product["product_url"], product["edit_url"]
+        logging.info(f"Обрабатываем товар: {product_url}")
+        driver.get(product_url)
+        sleep(2)
+        close_ad(driver)
+        
+        try:
+            button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH,
+                    "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                ))
+            )
+            button.click()
+        except TimeoutException:
+            logging.warning("Не удалось найти кнопку просмотра цен.")
+            return
+        
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
+        )
+        
+        product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
+        if not product_offers:
+            logging.warning("Нет предложений по этому товару.")
+            return
+        
+        lowest_price = float('inf')
+        lowest_price_merchant = ""
+        super_store_price = None
+        
+        for offer in product_offers:
+            try:
+                merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
+                
+                price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
+                price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
+                
+                # Выбираем минимальную цену, если оба атрибута найдены
+                price_text = None
+                if price_text_old and price_text_new:
+                    price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
+
+                elif price_text_old:
+                    price_text = price_text_old
+                elif price_text_new:
+                    price_text = price_text_new
+                # Если цена найдена, очищаем и конвертируем её в число
+                if price_text:
+                    price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
+                    if not price_text_cleaned:
+                        continue
+                    
+                price = float(price_text_cleaned)
+                if merchant == "Super Store":
+                    super_store_price = price
+                if price < lowest_price:
+                    lowest_price = price
+                    lowest_price_merchant = merchant
+            except Exception as e:
+                logging.warning(f"Ошибка при обработке предложения: {e}")
+                continue
+        
+        logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
+        if super_store_price is not None:
+            logging.info(f"Цена от Super Store: {super_store_price}")
+
+        if lowest_price <= 80:
+            logging.info(f"Самая низкая цена ({lowest_price}₼) слишком низкая, пропускаем товар.")
+            return
+        
+        if super_store_price is not None and lowest_price < super_store_price:
+            logging.info("Меняем цену...")
+            driver.get(edit_url)
+            logging.info(f"Открыта страница изменения цены: {edit_url}")
+     
+            # Логируем текущий URL после загрузки страницы
+            logging.info(f"Текущий URL: {driver.current_url}")
+            
+            try:
+                # Обновляем XPath для нахождения чекбокса скидки
+                discount_checkbox = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                )
+
+                # Проверяем, активен ли чекбокс скидки
+                if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                    discount_checkbox.click()
+                    logging.info("Галочка на скидку поставлена.")
+
+                discount_input = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                )
+
+                discount_input.clear()
+                discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
+                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
+
+                # Нажимаем на кнопку "Готово" или "Hazır"
+                save_button = WebDriverWait(driver, 30).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                )
+
+                save_button.click()
+                logging.info("Цена обновлена!")
+
+            except Exception as e:
+                logging.error(f"Ошибка при установке скидочной цены: {e}")
+
+    except Exception as e:
+        logging.exception(f"Ошибка при обработке товара: {e}")
+
+# Основная функция
+def process_products_from_json(json_file):
+    products = load_json(json_file)
     driver = create_driver()
     try:
         login_to_umico(driver)
+        
+        for product in products:
+            process_product(product, driver)
 
-        while not q.empty():
-            product = q.get()
-            product_url, edit_url = product["product_url"], product["edit_url"]
-            logging.info(f"Обрабатываем товар: {product_url}")
-            driver.get(product_url)
-            sleep(2)
-            close_ad(driver)
-            
-            try:
-                button = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.XPATH,
-                        "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-                    ))
-                )
-                button.click()
-            except:
-                logging.warning("Не удалось найти кнопку просмотра цен.")
-                continue
-            
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
-            )
-            
-            product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-            if not product_offers:
-                logging.warning("Нет предложений по этому товару.")
-                continue
-            
-            lowest_price = float('inf')
-            lowest_price_merchant = ""
-            super_store_price = None
-            
-            for offer in product_offers:
-                try:
-                    merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                    
-                    price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
-                    price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
-                    
-                    # Выбираем минимальную цену, если оба атрибута найдены
-                    price_text = None
-                    if price_text_old and price_text_new:
-                        price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
-
-                    elif price_text_old:
-                        price_text = price_text_old
-                    elif price_text_new:
-                        price_text = price_text_new
-                    # Если цена найдена, очищаем и конвертируем её в число
-                    if price_text:
-                        price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
-                        if not price_text_cleaned:
-                            continue
-                        
-                    price = float(price_text_cleaned)
-                    if merchant == "Super Store":
-                        super_store_price = price
-                    if price < lowest_price:
-                        lowest_price = price
-                        lowest_price_merchant = merchant
-                except Exception as e:
-                    logging.warning(f"Ошибка при обработке предложения: {e}")
-                    continue
-            
-            logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
-            if super_store_price is not None:
-                logging.info(f"Цена от Super Store: {super_store_price}")
-
-            if lowest_price <= 80:
-                logging.info(f"Самая низкая цена ({lowest_price}₼) слишком низкая, пропускаем товар.")
-                continue
-            
-            if super_store_price is not None and lowest_price < super_store_price:
-                logging.info("Меняем цену...")
-                driver.get(edit_url)
-                logging.info(f"Открыта страница изменения цены: {edit_url}")
- 
-                # Логируем текущий URL после загрузки страницы
-                logging.info(f"Текущий URL: {driver.current_url}")
-                
-                try:
-                    # Обновляем XPath для нахождения чекбокса скидки
-                    discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                    )
-
-                    # Проверяем, активен ли чекбокс скидки
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
-
-                    # Нажимаем на кнопку "Готово" или "Hazır"
-                    save_button = WebDriverWait(driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-
-                except Exception as e:
-                    logging.error(f"Ошибка при установке скидочной цены: {e}")
-   
-            q.task_done()
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
+        logging.error(f"Ошибка обработки товаров: {e}")
     finally:
         driver.quit()
 
-# Функция для запуска потоков
-def process_products_from_json(json_file):
-    products = load_json(json_file)
-    q = queue.Queue()
-
-    for product in products:
-        q.put(product)
-
-    threads = []
-    num_threads = min(2, len(products))  # Запускаем не больше 2 потоков
-
-    for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(q,))
-        threads.append(thread)
-        thread.start()
-
-    q.join()
-
-    for thread in threads:
-        thread.join()
-
-# Бесконечный цикл
 if __name__ == "__main__":
     while True:
         process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
-        sleep(10)  # Пауза перед повторным запуском
+        sleep(60)  # Пауза перед повторным запуском
