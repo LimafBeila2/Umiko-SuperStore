@@ -24,16 +24,18 @@ def load_json(json_file):
         return json.load(f)
 
 
-# Настройки Chrome
 def create_driver():
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")  # Запуск в безголовом режиме
-    # Указываем путь к ChromeDriver
-    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
 
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
-
+    try:
+        # Указываем путь к ChromeDriver
+        service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
+        driver = webdriver.Chrome(service=service, options=options)
+        return driver
+    except Exception as e:
+        logging.error(f"Ошибка при создании драйвера: {e}")
+        raise
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
