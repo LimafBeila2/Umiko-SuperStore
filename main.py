@@ -22,7 +22,6 @@ def load_json(json_file):
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-
 # Настройки Chrome
 def create_driver():
     options = Options()
@@ -31,7 +30,8 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
-    service = Service("/usr/bin/chromedriver")
+    options.add_argument("--remote-debugging-port=9222")  # Включаем порт для отладки
+    service = Service("/usr/bin/chromedriver", log_path="chromedriver.log")  # Логирование chromedriver
     return webdriver.Chrome(service=service, options=options)
 
 # Функция входа в Umico Business
@@ -73,44 +73,6 @@ def close_ad(driver):
         logging.info("Город Баку выбран.")
     except:
         logging.info("Окно выбора города не появилось.")
-
-# Функция изменения цены на товар
-def change_price(driver, lowest_price):
-    try:
-        # Поиск чекбокса скидки
-        discount_checkbox = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-        )
-        
-        # Проверка, активирована ли скидка, и установка её, если она ещё не активирована
-        if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-            discount_checkbox.click()  # Устанавливаем скидку
-            logging.info("Галочка на скидку поставлена. Скидка активирована.")
-        else:
-            logging.info("Скидка уже активирована. Пропускаем установку.")
-
-        # Поиск поля для ввода скидочной цены
-        discount_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-        )
-
-        # Очистка поля и ввод новой цены
-        discount_input.clear()
-        discounted_price = round(lowest_price - 0.03, 2)  # Установка скидочной цены (уменьшаем на 0.03)
-        discount_input.send_keys(str(discounted_price))
-        logging.info(f"Установлена скидочная цена: {discounted_price} ₼")
-
-        # Поиск кнопки для сохранения изменений
-        save_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-        )
-
-        # Нажатие кнопки "Готово" для сохранения
-        save_button.click()
-        logging.info("Цена обновлена! Нажали на кнопку 'Готово'.")
-    
-    except Exception as e:
-        logging.error(f"Ошибка при изменении цены: {e}")
 
 # Функция обработки одного товара
 def process_product(q):
@@ -200,13 +162,55 @@ def process_product(q):
                 logging.info(f"Текущий URL: {driver.current_url}")
                 
                 try:
-                    change_price(driver, lowest_price)
+                    discount_checkbox = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                    )
+
+                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+                        discount_checkbox.click()
+                        logging.info("Галочка на скидку поставлена.")
+
+                    discount_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                    )
+
+                    discount_input.clear()
+                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
+                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
+
+                    save_button = WebDriverWait(driver, 30).until(
+                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                    )
+
+                    save_button.click()
+                    logging.info("Цена обновлена!")
+
+                    # Снимок экрана и HTML страницы после обновления
+                    driver.save_screenshot("price_update_success.png")
+                    logging.info("Скриншот сохранен как 'price_update_success.png'")
+                    page_source = driver.page_source
+                    with open("updated_page_source.html", "w", encoding="utf-8") as f:
+                        f.write(page_source)
+                    logging.info("HTML страницы сохранен в 'updated_page_source.html'")
+
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
-   
+                    driver.save_screenshot("error_screenshot.png")
+                    logging.error("Скриншот сохранен как 'error_screenshot.png'")
+                    page_source = driver.page_source
+                    with open("error_page_source.html", "w", encoding="utf-8") as f:
+                        f.write(page_source)
+                    logging.error("HTML страницы сохранен в 'error_page_source.html'")
+
             q.task_done()
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+        driver.save_screenshot("error_screenshot.png")
+        logging.error("Скриншот сохранен как 'error_screenshot.png'")
+        page_source = driver.page_source
+        with open("error_page_source.html", "w", encoding="utf-8") as f:
+            f.write(page_source)
+        logging.error("HTML страницы сохранен в 'error_page_source.html'")
     finally:
         driver.quit()
 
