@@ -29,14 +29,15 @@ def create_driver():
 
 # Настройки Chrome
 def create_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Запуск в безголовом режиме
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    service = Service("/usr/bin/chromedriver")
+    return webdriver.Chrome(service=service, options=options)
 
-    # Указываем путь к ChromeDriver
-    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
-
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
