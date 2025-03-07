@@ -12,18 +12,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Настройки для Chrome
 def create_driver():
     options = Options()
-    options.add_argument("--headless")  # Это для запуска без GUI, если не нужно
+    options.add_argument("--headless")  # Для запуска без графического интерфейса
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
-    
-    # Устанавливаем драйвер, автоматически выбирая совместимую версию
-    service = Service(ChromeDriverManager().install())  # Без указания версии
+
+    # Указываем путь к скачанному chromedriver.exe
+    service = Service(executable_path="C:/Users/Famka/.vscode/selenium/chromedriver-win32/chromedriver.exe")
     driver = webdriver.Chrome(service=service, options=options)
     
     return driver
+
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
