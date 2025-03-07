@@ -34,6 +34,7 @@ def create_driver():
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
+
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
