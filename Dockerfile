@@ -1,6 +1,7 @@
+# Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем bash и зависимости для работы с Chromium
+# Устанавливаем bash и необходимые зависимости для Chromium и работы с Selenium
 RUN apt-get update && apt-get install -y \
     bash \
     libxss1 \
@@ -25,13 +26,13 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
-# Создаем виртуальное окружение
+# Создаем виртуальное окружение для Python
 RUN python -m venv /opt/venv
 
 # Обновляем pip в виртуальном окружении
 RUN /opt/venv/bin/pip install --upgrade pip
 
-# Устанавливаем webdriver-manager и другие зависимости
+# Копируем requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
