@@ -18,7 +18,6 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
-    # Убедитесь, что путь к драйверу правильный
     service = Service(executable_path="/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
     return driver  # Возвращаем созданный драйвер
@@ -64,8 +63,7 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки одного товара
-def process_product(product):
-    driver = create_driver()
+def process_product(product, driver):
     try:
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Обрабатываем товар: {product_url}")
@@ -174,13 +172,16 @@ def process_product(product):
                 save_button.click()
                 logging.info("Цена обновлена!")
 
+                # После изменения цены пересоздаем драйвер
+                driver.quit()
+                driver = create_driver()
+                logging.info("Пересоздан новый драйвер.")
+
             except Exception as e:
                 logging.error(f"Ошибка при установке скидочной цены: {e}")
    
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
-    finally:
-        driver.quit()
 
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
@@ -189,9 +190,13 @@ def load_json(json_file):
 
 # Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
-    products = load_json(json_file)
-    for product in products:
-        process_product(product)
+    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
+    try:
+        products = load_json(json_file)
+        for product in products:
+            process_product(product, driver)
+    finally:
+        driver.quit()  # Закрываем драйвер после обработки всех товаров
 
 # Бесконечный цикл
 if __name__ == "__main__":
