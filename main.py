@@ -143,8 +143,9 @@ def process_product(product):
         if super_store_price is not None:
             logging.info(f"Цена от Super Store: {super_store_price}")
 
-        if lowest_price <= 80:
-            logging.info(f"Самая низкая цена ({lowest_price}₼) слишком низкая, пропускаем товар.")
+        # Проверяем, если цена товара меньше или равна 80.1, то пропускаем
+        if lowest_price <= 80.1:
+            logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
         
         if super_store_price is not None and lowest_price < super_store_price:
@@ -169,8 +170,8 @@ def process_product(product):
                 )
 
                 discount_input.clear()
-                discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
-                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
+                discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
 
                 save_button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
