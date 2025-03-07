@@ -185,16 +185,17 @@ def process_product(q):
                     sleep(2)
                     save_button.click()
                     logging.info("Цена обновлена!")
-                    sleep(10)
+                    sleep(2)
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
-                    
+            sleep(2)       
             q.task_done()
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
+        sleep(2)
         driver.quit()
-
+sleep(2)
 # Функция для запуска потоков
 def process_products_from_json(json_file):
     products = load_json(json_file)
@@ -215,7 +216,7 @@ def process_products_from_json(json_file):
 
     for thread in threads:
         thread.join()
-
+sleep(2)
 if __name__ == "__main__":
     process_products_from_json("product.json")
     logging.info("Работа завершена!")
