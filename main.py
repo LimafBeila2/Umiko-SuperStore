@@ -15,15 +15,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 # Настройки логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Настройки для Chrome
 def create_driver():
     options = Options()
-    options.add_argument("--headless")  # Это для запуска без GUI, если не нужно
+    options.add_argument("--headless")  # Для запуска без GUI
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
-    
-    # Укажи путь к бинарному файлу Chrome вручную
-    options.binary_location = "C:/Program Files/Google/Chrome/Application/chrome.exe"  # Убедись, что путь верный для твоей системы
     
     # Скачиваем и используем драйвер автоматически
     service = Service(ChromeDriverManager().install())
