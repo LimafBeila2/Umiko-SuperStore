@@ -19,8 +19,8 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
     
-    # Указываем версию драйвера
-    service = Service(ChromeDriverManager(version="134.0.6998.35").install())  # Указываем нужную версию ChromeDriver
+    # Устанавливаем драйвер, автоматически выбирая совместимую версию
+    service = Service(ChromeDriverManager().install())  # Без указания версии
     driver = webdriver.Chrome(service=service, options=options)
     
     return driver
