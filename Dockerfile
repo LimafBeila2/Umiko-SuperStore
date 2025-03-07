@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
-# Устанавливаем pip и создаем виртуальное окружение
+# Создаем виртуальное окружение
 RUN python -m venv /opt/venv
 
 # Обновляем pip в виртуальном окружении
