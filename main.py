@@ -12,7 +12,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def create_driver():
+    logging.info("Создаю новый драйвер...")
     options = Options()
     options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
@@ -20,15 +24,18 @@ def create_driver():
 
     service = Service(executable_path="/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
+    logging.info("Драйвер успешно создан.")
     return driver  # Возвращаем созданный драйвер
 
 # Функция для авторизации
 def login_to_umico(driver):
+    logging.info("Начинаем процесс авторизации на Umico...")
     load_dotenv()
     username = os.getenv("UMICO_USERNAME")
     password = os.getenv("UMICO_PASSWORD")
 
     if not username or not password:
+        logging.error("Ошибка: логин или пароль не найдены в .env")
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
     driver.get("https://business.umico.az/sign-in")
@@ -54,6 +61,7 @@ def login_to_umico(driver):
 def close_ad(driver):
     try:
         # Здесь добавляется возможность выбора города "Баку"
+        logging.info("Пытаемся выбрать город Баку...")
         baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
@@ -64,9 +72,9 @@ def close_ad(driver):
 
 # Функция обработки одного товара
 def process_product(product, driver):
+    logging.info(f"Обрабатываем товар с URL: {product['product_url']}")
     try:
         product_url, edit_url = product["product_url"], product["edit_url"]
-        logging.info(f"Обрабатываем товар: {product_url}")
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
@@ -78,6 +86,7 @@ def process_product(product, driver):
                 ))
             )
             button.click()
+            logging.info("Кнопка для просмотра цен найдена и нажата.")
         except:
             logging.warning("Не удалось найти кнопку просмотра цен.")
             return
@@ -185,6 +194,7 @@ def process_product(product, driver):
 
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
+    logging.info(f"Загружаем товары из файла: {json_file}")
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -201,6 +211,7 @@ def process_products_from_json(json_file):
 # Бесконечный цикл
 if __name__ == "__main__":
     while True:
+        logging.info("Начинаем обработку товаров...")
         process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
         sleep(60)  # Пауза перед повторным запуском
