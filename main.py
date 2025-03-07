@@ -156,7 +156,11 @@ def process_product(q):
             if super_store_price is not None and lowest_price < super_store_price:
                 logging.info("Меняем цену...")
                 driver.get(edit_url)
-                sleep(5)
+                logging.info(f"Открыта страница изменения цены: {edit_url}")
+ 
+    
+                # Логируем текущий URL после загрузки страницы
+                logging.info(f"Текущий URL: {driver.current_url}")
                 
                 try:
                     discount_checkbox = WebDriverWait(driver, 10).until(
@@ -200,7 +204,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(3, len(products))  # Запускаем не больше 10 потоков
+    num_threads = min(1, len(products))  # Запускаем не больше 10 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
