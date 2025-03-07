@@ -20,19 +20,16 @@ def load_json(json_file):
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Функция для создания драйвера
 def create_driver():
     options = Options()
-    options.binary_location = "/usr/bin/chromium"
+    options.binary_location = "C:/Program Files/Google/Chrome/Application/chrome.exe"  # Путь к браузеру
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     
-    # Используем правильный путь к chromedriver через webdriver-manager
-    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
-    
-    return webdriver.Chrome(service=service, options=options)
+    # Указываем путь к chromedriver.exe
+    service = Service("C:/Users/Famka/.vscode/selenium/chromedriver.exe")  # Путь к chromedriver
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
