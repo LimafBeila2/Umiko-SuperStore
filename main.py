@@ -74,6 +74,44 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
+# Функция изменения цены на товар
+def change_price(driver, lowest_price):
+    try:
+        # Поиск чекбокса скидки
+        discount_checkbox = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+        )
+        
+        # Проверка, активирована ли скидка, и установка её, если она ещё не активирована
+        if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
+            discount_checkbox.click()  # Устанавливаем скидку
+            logging.info("Галочка на скидку поставлена. Скидка активирована.")
+        else:
+            logging.info("Скидка уже активирована. Пропускаем установку.")
+
+        # Поиск поля для ввода скидочной цены
+        discount_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+        )
+
+        # Очистка поля и ввод новой цены
+        discount_input.clear()
+        discounted_price = round(lowest_price - 0.03, 2)  # Установка скидочной цены (уменьшаем на 0.03)
+        discount_input.send_keys(str(discounted_price))
+        logging.info(f"Установлена скидочная цена: {discounted_price} ₼")
+
+        # Поиск кнопки для сохранения изменений
+        save_button = WebDriverWait(driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+        )
+
+        # Нажатие кнопки "Готово" для сохранения
+        save_button.click()
+        logging.info("Цена обновлена! Нажали на кнопку 'Готово'.")
+    
+    except Exception as e:
+        logging.error(f"Ошибка при изменении цены: {e}")
+
 # Функция обработки одного товара
 def process_product(q):
     driver = create_driver()
@@ -158,44 +196,20 @@ def process_product(q):
                 driver.get(edit_url)
                 logging.info(f"Открыта страница изменения цены: {edit_url}")
  
-    
                 # Логируем текущий URL после загрузки страницы
                 logging.info(f"Текущий URL: {driver.current_url}")
                 
                 try:
-                    discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                    )
-
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
-
-                    save_button = WebDriverWait(driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(2)
+                    change_price(driver, lowest_price)
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
-            sleep(2)       
+   
             q.task_done()
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
-        sleep(2)
         driver.quit()
-sleep(2)
+
 # Функция для запуска потоков
 def process_products_from_json(json_file):
     products = load_json(json_file)
