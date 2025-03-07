@@ -31,7 +31,7 @@ RUN python -m venv /opt/venv
 # Обновляем pip в виртуальном окружении
 RUN /opt/venv/bin/pip install --upgrade pip
 
-# Копируем requirements.txt и устанавливаем зависимости
+# Устанавливаем webdriver-manager и другие зависимости
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
