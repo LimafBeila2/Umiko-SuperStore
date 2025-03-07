@@ -25,12 +25,12 @@ def create_driver():
     options.add_argument("--headless")  # Запуск в безголовом режиме
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")  # Отключаем GPU, полезно для контейнеров
-    options.binary_location = "/usr/bin/chromium"  # Указываем путь к Chromium
 
     # Автоматическая установка и настройка драйвера через webdriver-manager
     service = Service(ChromeDriverManager().install())  # webdriver-manager сам скачает нужную версию chromedriver
     driver = webdriver.Chrome(service=service, options=options)
     return driver
+
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
