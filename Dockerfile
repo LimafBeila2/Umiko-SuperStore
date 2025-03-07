@@ -1,7 +1,6 @@
-# Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем bash и зависимости для работы с Chrome и ChromeDriver
+# Устанавливаем bash и зависимости для работы с Chromium и ChromeDriver
 RUN apt-get update && apt-get install -y \
     bash \
     libxss1 \
@@ -35,6 +34,10 @@ COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Устанавливаем переменные для использования Chromium в Selenium
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
 WORKDIR /app
