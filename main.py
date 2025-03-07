@@ -155,9 +155,7 @@ def process_product(q):
                 logging.info("Меняем цену...")
                 driver.get(edit_url)
                 sleep(5)
-                if "business.umico.az/new/sign-i" in driver.current_url:
-                    logging.info("Привет, угадал!")         
-                           
+                
                 try:
                     discount_checkbox = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
@@ -213,7 +211,5 @@ def process_products_from_json(json_file):
         thread.join()
 
 if __name__ == "__main__":
-    while True:
-        process_products_from_json("product.json")
-        logging.info("Работа завершена! Перезапуск через 1 секунду...")
-        sleep(1)
+    process_products_from_json("product.json")
+    logging.info("Работа завершена!")
