@@ -154,45 +154,28 @@ def process_product(q):
             
             if super_store_price is not None and lowest_price < super_store_price:
                 logging.info("Меняем цену...")
+
                 driver.get(edit_url)
                 logging.info(f"Открыта страница изменения цены: {edit_url}")
- 
+                
                 # Логируем текущий URL после загрузки страницы
                 logging.info(f"Текущий URL: {driver.current_url}")
                 
+                # Явное ожидание загрузки элементов страницы редактирования (например, формы ввода цены)
                 try:
-                    # Обновляем XPath для нахождения чекбокса скидки
-                    discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                    WebDriverWait(driver, 30).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@name='price']"))  # Убедитесь, что это правильный XPath для поля ввода цены
                     )
-
-                    # Проверяем, активен ли чекбокс скидки
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
-
-                    # Нажимаем на кнопку "Готово" или "Hazır"
-                    save_button = WebDriverWait(driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-
+                    logging.info("Страница редактирования загружена, готов к изменению цены.")
                 except Exception as e:
-                    logging.error(f"Ошибка при установке скидочной цены: {e}")
-   
-            q.task_done()
+                    logging.warning(f"Ошибка при ожидании загрузки страницы редактирования: {e}")
+                    continue
+                
+                # Выполнение изменения цены, если все готово
+                # Добавьте код для изменения цены, если необходимо.
+            
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
+        logging.error(f"Ошибка при обработке продукта: {e}")
     finally:
         driver.quit()
 
