@@ -158,9 +158,36 @@ def process_product(product):
             logging.info(f"Текущий URL: {driver.current_url}")
             
             try:
+                # Проверяем, если галочка не активирована, то ставим ее
+                checkbox_class = discount_checkbox.get_attribute('class')
+                if 'tw-border-umico-brand-main-brand' not in checkbox_class:
+                    discount_checkbox.click()
+                    logging.info("Галочка на скидку поставлена.")
+                else:
+                    logging.info("Галочка уже установлена.")
+
+                # Находим поле ввода скидочной цены
+                    discount_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                        )
+
+                        # Очищаем поле и ставим новую цену
+                    discount_input.clear()
+                    discount_input.send_keys(str(round(lowest_price - 0.03, 2)))
+                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.03, 2)} ₼")
+
+                    # Сохраняем изменения
+                    save_button = WebDriverWait(driver, 30).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Hazır']]"))
+                    )
+                    save_button.click()
+                    logging.info("Цена обновлена!")
+
+            except Exception as e:
+                logging.error(f"Ошибка при установке скидочной цены: {e}")
                 discount_checkbox = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                )
+                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[1]"))
+                    )
 
                 if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
                     discount_checkbox.click()

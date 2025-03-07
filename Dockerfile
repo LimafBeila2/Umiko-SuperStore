@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     chromium \
+    chromium-driver \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
@@ -33,6 +34,10 @@ COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Устанавливаем переменные для использования Chromium в Selenium
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
 WORKDIR /app
