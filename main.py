@@ -20,14 +20,15 @@ def load_json(json_file):
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Настройки Chrome
 def create_driver():
-    options = webdriver.ChromeOptions()
+    options = Options()
     options.add_argument("--headless")  # Запуск в безголовом режиме
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")  # Отключаем GPU, полезно для контейнеров
+    options.binary_location = "/usr/bin/chromium"  # Указываем путь к Chromium
 
-    # Указываем путь к ChromeDriver
-    service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
-
+    # Автоматическая установка и настройка драйвера через webdriver-manager
+    service = Service(ChromeDriverManager().install())  # webdriver-manager сам скачает нужную версию chromedriver
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
