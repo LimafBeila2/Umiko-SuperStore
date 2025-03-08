@@ -1,7 +1,7 @@
 # Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем bash и необходимые зависимости для Chromium и работы с Selenium
+# Устанавливаем зависимости для Chrome и Selenium
 RUN apt-get update && apt-get install -y \
     bash \
     libxss1 \
@@ -51,6 +51,9 @@ ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
 WORKDIR /app
+
+# Создаем папку для профиля Chrome (если ее нет)
+RUN mkdir -p /tmp/chrome_profile
 
 # Запускаем приложение
 CMD ["python", "main.py"]

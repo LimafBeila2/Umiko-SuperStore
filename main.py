@@ -29,25 +29,24 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
 
-# Путь к папке с профилем
-profile_path = r"C:\Users\Famka\AppData\Local\Google\Chrome\User Data"
+# Папка для хранения профиля в контейнере Railway
+CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+
 
 def create_driver():
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
 
     options = Options()
-    # options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
-    # Указываем путь к папке с профилем
-    options.add_argument(f"user-data-dir={profile_path}")  # Путь к папке с профилями
-    options.add_argument("profile-directory=Profile 2")  # Указываем нужный профиль
-
-    # Выбираем случайный прокси
-    proxy = random.choice(proxies_list)
-    options.add_argument(f"--proxy-server={proxy}")
+    # Выбираем случайный прокси (если используется)
+    # proxy = random.choice(proxies_list)
+    # options.add_argument(f"--proxy-server={proxy}")
 
     # Создаем драйвер
     driver = webdriver.Chrome(options=options)
@@ -55,7 +54,8 @@ def create_driver():
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-    return driver  # Возвращаем драйвер с прокси и заголовками
+    return driver  # Возвращаем драйвер с профилем и заголовками
+
 
 
 # Функция для авторизации
