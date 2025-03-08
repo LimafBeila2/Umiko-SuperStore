@@ -116,6 +116,7 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки одного товара
+# Функция обработки одного товара
 def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
@@ -134,10 +135,12 @@ def process_product(product, driver):
                 ))
             )
             button.click()
-        except:
-            logging.warning("Не удалось найти кнопку просмотра цен.")
+            logging.info("Кнопка для просмотра цен всех продавцов была нажата.")
+        except Exception as e:
+            logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
             return
         
+        logging.info("Ожидаем загрузки предложений по товару...")
         WebDriverWait(driver, 30).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
         )
@@ -155,6 +158,7 @@ def process_product(product, driver):
         for offer in product_offers:
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
+                logging.info(f"Предложение от продавца: {merchant}")
                 
                 price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
                 price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
@@ -168,6 +172,7 @@ def process_product(product, driver):
                     price_text = price_text_old
                 elif price_text_new:
                     price_text = price_text_new
+                
                 # Если цена найдена, очищаем и конвертируем её в число
                 if price_text:
                     price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
@@ -175,6 +180,7 @@ def process_product(product, driver):
                         continue
                     
                 price = float(price_text_cleaned)
+                logging.info(f"Найдена цена: {price}₼")
                 if merchant == "Super Store":
                     super_store_price = price
                 if price < lowest_price:
@@ -206,22 +212,23 @@ def process_product(product, driver):
             logging.info(f"Текущий URL: {driver.current_url}")
             
             try:
-                logging.info("Ожидаем появления поля для скидки...")
-                discount_checkbox = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                )
+                # Проверяем наличие поля для скидочной цены
+                try:
+                    discount_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                    ))
+                    logging.info("Поле для скидочной цены найдено.")
+                except:
+                    # Если поле скидочной цены не найдено, ищем поле "Qiymət"
+                    discount_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiymət']"))
+                    ))
+                    logging.info("Поле для скидочной цены не найдено, записываем цену в поле 'Qiymət'.")
 
-                if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                    discount_checkbox.click()
-                    logging.info("Галочка на скидку поставлена.")
-
-                discount_input = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                )
-
+                # Записываем цену
                 discount_input.clear()
                 discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+                logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
 
                 save_button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
