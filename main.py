@@ -12,6 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
+import chromedriver_autoinstaller
 
 
 # Список прокси
@@ -35,6 +36,9 @@ headers = {
 
 
 def create_driver():
+    # Автоматически устанавливаем подходящую версию ChromeDriver
+    chromedriver_autoinstaller.install()  
+
     options = Options()
     options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
@@ -50,9 +54,9 @@ def create_driver():
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-
-
     return driver  # Возвращаем драйвер с прокси и заголовками
+
+
 # Функция для авторизации
 def login_to_umico(driver):
     load_dotenv()
