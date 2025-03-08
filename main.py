@@ -18,8 +18,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def create_driver():
     logging.info("Создаю новый драйвер...")
     options = Options()
-    options.add_argument("--headless")  # Без графического интерфейса
-    options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
     service = Service(executable_path="/usr/bin/chromedriver")
