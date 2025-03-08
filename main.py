@@ -27,6 +27,56 @@ def create_driver():
     logging.info("Драйвер успешно создан.")
     return driver  # Возвращаем созданный драйвер
 
+# Функция для авторизации на странице авторизации
+def login_on_redirect(driver):
+    logging.info("Переходим на страницу входа для авторизации...")
+
+    # Нажимаем на ссылку для перехода на страницу авторизации
+    try:
+        login_redirect_link = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='/']"))
+        )
+        login_redirect_link.click()
+        logging.info("Перешли на страницу авторизации.")
+    except Exception as e:
+        logging.error(f"Не удалось нажать на ссылку для редиректа: {e}")
+        return False
+
+    # Переходим к странице входа
+    try:
+        # Ожидаем, пока загрузится кнопка для входа
+        login_button = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//span[@class='tw-justify-center tw-w-auto tw-items-center tw-flex !tw-break-keep tw-text-base tw-font-medium tw-tracking-normal tw-leading-normal'][text()='Giriş']"))
+        )
+        login_button.click()
+        logging.info("Нажали кнопку входа.")
+
+        # Вводим логин и пароль
+        load_dotenv()
+        username = os.getenv("UMICO_USERNAME")
+        password = os.getenv("UMICO_PASSWORD")
+
+        if not username or not password:
+            logging.error("Ошибка: логин или пароль не найдены в .env")
+            raise ValueError("Ошибка: логин или пароль не найдены в .env")
+
+        username_input = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
+        )
+        username_input.send_keys(username)
+
+        password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
+        password_input.send_keys(password)
+        password_input.send_keys(Keys.RETURN)
+
+        WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
+        logging.info("Авторизация завершена успешно!")
+
+        return True
+    except Exception as e:
+        logging.error(f"Ошибка при авторизации: {e}")
+        return False
+
 # Функция для авторизации
 def login_to_umico(driver):
     logging.info("Начинаем процесс авторизации на Umico...")
@@ -149,7 +199,9 @@ def process_product(product, driver):
             logging.info("Меняем цену...")
 
             # Авторизация перед переходом на страницу редактирования
-            login_to_umico(driver)
+            if not login_on_redirect(driver):
+                logging.error("Не удалось пройти авторизацию после редиректа.")
+                return
 
             driver.get(edit_url)
             logging.info(f"Открыта страница изменения цены: {edit_url}")
@@ -179,7 +231,7 @@ def process_product(product, driver):
                 )
 
                 save_button.click()
-                logging.info("Цена обновлена!")
+                logging.info("Цена обновлена! ")
 
                 # После изменения цены пересоздаем драйвер
                 driver.quit()
@@ -200,13 +252,13 @@ def load_json(json_file):
 
 # Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
-    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
-    try:
-        products = load_json(json_file)
-        for product in products:
-            process_product(product, driver)
-    finally:
-        driver.quit()  # Закрываем драйвер после обработки всех товаров
+    driver = create_driver()
+    products = load_json(json_file)
+
+    for product in products:
+        process_product(product, driver)
+
+    driver.quit()
 
 # Бесконечный цикл
 if __name__ == "__main__":
