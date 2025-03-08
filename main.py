@@ -15,6 +15,9 @@ import random
 import chromedriver_autoinstaller
 
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+
 # Список прокси
 proxies_list = [
     "103.119.111.1:8080",
