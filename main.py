@@ -27,48 +27,16 @@ def create_driver():
     logging.info("Драйвер успешно создан.")
     return driver  # Возвращаем созданный драйвер
 
-# Функция для авторизации после редиректа
-def login_on_redirect(driver):
-    try:
-        # Проверяем, если редирект на страницу логина
-        if "sign-in" in driver.current_url:
-            logging.info("Переходим на страницу входа.")
-            
-            # Нажимаем на ссылку для входа
-            login_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[@href='/']"))
-            )
-            login_button.click()
-            logging.info("Нажали на кнопку входа.")
-
-            # Перехожу на главную страницу
-            WebDriverWait(driver, 10).until(EC.url_contains("business.umico.az"))
-            logging.info("Теперь на главной странице, нажимаем 'Giriş'.")
-
-            # Нажимаем на кнопку входа на главной странице
-            giriş_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Giriş')]"))
-            )
-            giriş_button.click()
-            logging.info("Нажали на кнопку 'Giriş'.")
-            
-            # Вводим логин и пароль
-            username_input = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
-            )
-            password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
-            username_input.send_keys(os.getenv("UMICO_USERNAME"))
-            password_input.send_keys(os.getenv("UMICO_PASSWORD"))
-            password_input.send_keys(Keys.RETURN)
-            
-            # Дождаться успешного входа
-            WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
-            logging.info("Успешный вход.")
-            return True
-        return False
-    except Exception as e:
-        logging.error(f"Ошибка при попытке авторизации: {e}")
-        return False
+def load_cookies(driver, cookies_file="cookies.json"):
+    if os.path.exists(cookies_file):
+        logging.info("Загружаем cookies...")
+        with open(cookies_file, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Cookies успешно загружены.")
+    else:
+        logging.info("Нет сохраненных cookies. Пройдём авторизацию.")
 
 # Функция для авторизации
 def login_to_umico(driver):
@@ -95,15 +63,23 @@ def login_to_umico(driver):
         WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
         sleep(3)
         logging.info("Успешный вход в Umico Business!")
+        # Сохраняем cookies после успешного входа
+        save_cookies(driver)
     except:
         logging.error("Ошибка входа!")
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
-# Функция закрытия рекламы / выбора города
+# Сохранение cookies
+def save_cookies(driver, cookies_file="cookies.json"):
+    cookies = driver.get_cookies()
+    with open(cookies_file, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Cookies успешно сохранены.")
+
+# Функция для закрытия рекламы / выбора города
 def close_ad(driver):
     try:
-        # Здесь добавляется возможность выбора города "Баку"
         logging.info("Пытаемся выбрать город Баку...")
         baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
@@ -154,7 +130,6 @@ def process_product(product, driver):
                 price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
                 price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
                 
-                # Выбираем минимальную цену, если оба атрибута найдены
                 price_text = None
                 if price_text_old and price_text_new:
                     price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
@@ -163,7 +138,7 @@ def process_product(product, driver):
                     price_text = price_text_old
                 elif price_text_new:
                     price_text = price_text_new
-                # Если цена найдена, очищаем и конвертируем её в число
+
                 if price_text:
                     price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
                     if not price_text_cleaned:
@@ -183,7 +158,6 @@ def process_product(product, driver):
         if super_store_price is not None:
             logging.info(f"Цена от Super Store: {super_store_price}")
 
-        # Проверяем, если цена товара меньше или равна 80.1, то пропускаем
         if lowest_price <= 80.1:
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
@@ -191,17 +165,9 @@ def process_product(product, driver):
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
 
-            # Авторизация перед переходом на страницу редактирования
-            if not login_on_redirect(driver):
-                logging.error("Не удалось пройти авторизацию после редиректа.")
-                return
-
             driver.get(edit_url)
             logging.info(f"Открыта страница изменения цены: {edit_url}")
- 
-            # Логируем текущий URL после загрузки страницы
-            logging.info(f"Текущий URL: {driver.current_url}")
-            
+
             try:
                 discount_checkbox = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
@@ -224,9 +190,9 @@ def process_product(product, driver):
                 )
 
                 save_button.click()
-                logging.info("Цена обновлена! ")
+                logging.info("Цена обновлена!")
 
-                # После изменения цены пересоздаем драйвер
+                save_cookies(driver)  # Сохраняем cookies после изменения цены
                 driver.quit()
                 driver = create_driver()
                 logging.info("Пересоздан новый драйвер.")
@@ -237,19 +203,24 @@ def process_product(product, driver):
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
 
-# Основной блок
-if __name__ == "__main__":
-    driver = create_driver()
+def load_json(json_file):
+    logging.info(f"Загружаем товары из файла: {json_file}")
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
+def process_products_from_json(json_file):
+    driver = create_driver()
     try:
-        login_to_umico(driver)
-        
-        # Пример товара для обработки
-        product = {
-            "product_url": "https://example.com/product-url",
-            "edit_url": "https://example.com/edit-product-url"
-        }
-        
-        process_product(product, driver)
+        login_to_umico(driver)  # Авторизация
+        products = load_json(json_file)
+        for product in products:
+            process_product(product, driver)
     finally:
         driver.quit()
+
+if __name__ == "__main__":
+    while True:
+        logging.info("Начинаем обработку товаров...")
+        process_products_from_json("product.json")
+        logging.info("Работа завершена, повторная обработка через 60 секунд...")
+        sleep(60)
