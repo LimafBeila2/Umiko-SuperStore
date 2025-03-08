@@ -39,6 +39,7 @@ def create_driver():
 
     options = Options()
     options.add_argument("--no-sandbox")
+    options.add_argument("--headless")  # Для серверной среды
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
