@@ -22,8 +22,6 @@ proxies_list = [
     "103.119.111.3:8080",
 ]
 
-
-
 # Заголовки запроса
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
@@ -34,8 +32,11 @@ CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 
 
 def create_driver():
+    logging.info("Создаем новый WebDriver...")
+
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
 
     options = Options()
     options.add_argument("--no-sandbox")
@@ -51,6 +52,7 @@ def create_driver():
 
     # Создаем драйвер
     driver = webdriver.Chrome(options=options)
+    logging.info("WebDriver создан.")
 
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
@@ -58,17 +60,19 @@ def create_driver():
     return driver  # Возвращаем драйвер с профилем и заголовками
 
 
-
 # Функция для авторизации
 # Функция для авторизации в Umico
 def login_to_umico(driver):
+    logging.info("Загружаем переменные окружения для авторизации...")
     load_dotenv()  # Загружаем переменные окружения из файла .env
     username = os.getenv("UMICO_USERNAME")
     password = os.getenv("UMICO_PASSWORD")
 
     if not username or not password:
+        logging.error("Ошибка: логин или пароль не найдены в .env")
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
+    logging.info("Открываем страницу авторизации Umico...")
     # Открываем страницу авторизации
     driver.get("https://business.umico.az/sign-in")
     
@@ -77,11 +81,13 @@ def login_to_umico(driver):
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
     login_input.send_keys(username)  # Вводим логин
-    
+    logging.info(f"Логин '{username}' введен.")
+
     # Находим поле для ввода пароля и отправляем его
     password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
     password_input.send_keys(password)  # Вводим пароль
     password_input.send_keys(Keys.RETURN)  # Нажимаем Enter
+    logging.info("Пароль введен и форма отправлена.")
 
     try:
         # Ожидаем загрузки страницы заказов, чтобы убедиться, что вход был успешным
@@ -92,10 +98,12 @@ def login_to_umico(driver):
         logging.error("Ошибка входа!")
         driver.quit()  # Закрываем драйвер
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
+
 # Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
         # Здесь добавляется возможность выбора города "Баку"
+        logging.info("Ожидаем выбора города...")
         baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
@@ -107,14 +115,16 @@ def close_ad(driver):
 # Функция обработки одного товара
 def process_product(product, driver):
     try:
+        logging.info(f"Начинаем обработку товара: {product['product_url']}")
         sleep(10)
         product_url, edit_url = product["product_url"], product["edit_url"]
-        logging.info(f"Обрабатываем товар: {product_url}")
+        logging.info(f"Открываем страницу товара: {product_url}")
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
         
         try:
+            logging.info("Ищем кнопку для просмотра цен всех продавцов...")
             button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH,
                     "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
@@ -138,6 +148,7 @@ def process_product(product, driver):
         lowest_price_merchant = ""
         super_store_price = None
         
+        logging.info(f"Обрабатываем {len(product_offers)} предложений для этого товара.")
         for offer in product_offers:
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
@@ -178,7 +189,7 @@ def process_product(product, driver):
         if lowest_price <= 80.1:
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
-        
+        sleep(2)
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
 
@@ -192,6 +203,7 @@ def process_product(product, driver):
             logging.info(f"Текущий URL: {driver.current_url}")
             
             try:
+                logging.info("Ожидаем появления поля для скидки...")
                 discount_checkbox = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
                 )
@@ -211,10 +223,10 @@ def process_product(product, driver):
                 save_button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
                 )
-                sleep(1)
+                sleep(2)
                 save_button.click()
                 logging.info("Цена обновлена!")
-                sleep(1)
+                sleep(2)
                 # После изменения цены пересоздаем драйвер
                 driver.quit()
                 driver = create_driver()
@@ -228,15 +240,18 @@ def process_product(product, driver):
 
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
+    logging.info(f"Загружаем товары из файла {json_file}...")
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
 # Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
+    logging.info("Создаем драйвер для обработки товаров...")
     driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
     try:
         products = load_json(json_file)
         for product in products:
+            logging.info(f"Обрабатываем товар {product['product_url']}")
             process_product(product, driver)
     finally:
         driver.quit()  # Закрываем драйвер после обработки всех товаров
@@ -244,6 +259,7 @@ def process_products_from_json(json_file):
 # Бесконечный цикл
 if __name__ == "__main__":
     while True:
+        logging.info("Запускаем процесс обработки товаров...")
         process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
         sleep(60)  # Пауза перед повторным запуском
