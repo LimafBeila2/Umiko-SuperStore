@@ -90,9 +90,10 @@ def close_ad(driver):
         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки одного товара
-def process_product(product_url, edit_url, driver):
-    logging.info(f"Обрабатываем товар с URL: {product_url}")
+def process_product(product, driver):
+    logging.info(f"Обрабатываем товар с URL: {product['product_url']}")
     try:
+        product_url, edit_url = product["product_url"], product["edit_url"]
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
@@ -161,7 +162,6 @@ def process_product(product_url, edit_url, driver):
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
         
-        # Только если цена отличается и требует изменения
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
 
@@ -203,34 +203,24 @@ def process_product(product_url, edit_url, driver):
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
 
-# Храним товары и их ссылки в коде
-products = [
-    {
-        "product_url": "https://umico.az/product/339754-qadinlar-uchun-tualet-suyu-bvlgari-omnia-coral-65-ml",
-        "edit_url": "https://business.umico.az/account/products/my/2576516"
-    },
-    {
-        "product_url": "https://example.com/product2",
-        "edit_url": "https://example.com/edit2"
-    },
-    {
-        "product_url": "https://example.com/product3",
-        "edit_url": "https://example.com/edit3"
-    }
-]
+def load_json(json_file):
+    logging.info(f"Загружаем товары из файла: {json_file}")
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def process_products(products):
+def process_products_from_json(json_file):
     driver = create_driver()
     try:
         login_to_umico(driver)  # Авторизация
+        products = load_json(json_file)
         for product in products:
-            process_product(product["product_url"], product["edit_url"], driver)
+            process_product(product, driver)
     finally:
         driver.quit()
 
 if __name__ == "__main__":
     while True:
         logging.info("Начинаем обработку товаров...")
-        process_products(products)
+        process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
         sleep(60)
