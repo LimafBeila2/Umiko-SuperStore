@@ -192,7 +192,23 @@ def process_product(product, driver):
             price_change_button.click()
             logging.info("Нажата кнопка для изменения цены.")
 
-            # Тут будет код для изменения цены, если нужно
+            # Ожидаем появления поля для ввода новой цены
+            price_input = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiyməti daxil edin']"))
+            )
+
+            # Вводим новую цену
+            new_price = lowest_price + 1  # Например, увеличиваем цену на 1 для примера
+            price_input.clear()
+            price_input.send_keys(str(new_price))
+            logging.info(f"Устанавливаем новую цену: {new_price}₼")
+
+            # Подтверждаем изменение цены
+            save_button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Saxla')]"))
+            )
+            save_button.click()
+            logging.info("Цена успешно изменена.")
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
