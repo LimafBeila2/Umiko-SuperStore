@@ -20,7 +20,6 @@ def create_driver():
 
     # Опции для Chrome
     options = Options()
-    options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
