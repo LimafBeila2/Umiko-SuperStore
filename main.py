@@ -35,10 +35,9 @@ headers = {
 }
 
 
-
 def create_driver():
     # Автоматическая установка правильной версии ChromeDriver
-    chromedriver_autoinstaller.install()  
+    chromedriver_autoinstaller.install()
 
     options = Options()
     options.add_argument("--headless")  # Без графического интерфейса
@@ -49,9 +48,8 @@ def create_driver():
     proxy = random.choice(proxies_list)
     options.add_argument(f"--proxy-server={proxy}")
 
-    # Используем webdriver-manager для управления драйвером
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
 
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
