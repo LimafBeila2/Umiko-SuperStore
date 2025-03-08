@@ -35,8 +35,9 @@ headers = {
 }
 
 
+
 def create_driver():
-    # Автоматически устанавливаем подходящую версию ChromeDriver
+    # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()  
 
     options = Options()
@@ -48,6 +49,7 @@ def create_driver():
     proxy = random.choice(proxies_list)
     options.add_argument(f"--proxy-server={proxy}")
 
+    # Используем webdriver-manager для управления драйвером
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
@@ -55,7 +57,6 @@ def create_driver():
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
     return driver  # Возвращаем драйвер с прокси и заголовками
-
 
 # Функция для авторизации
 def login_to_umico(driver):
