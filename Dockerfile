@@ -36,6 +36,9 @@ RUN /opt/venv/bin/pip install --upgrade pip
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
+# Явно устанавливаем chromedriver-autoinstaller
+RUN /opt/venv/bin/pip install chromedriver-autoinstaller
+
 # Копируем все файлы приложения в контейнер
 COPY . /app
 
