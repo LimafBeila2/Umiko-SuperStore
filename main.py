@@ -215,14 +215,12 @@ def process_product(product, driver):
                 # Проверяем наличие поля для скидочной цены
                 try:
                     discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    ))
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")))
                     logging.info("Поле для скидочной цены найдено.")
                 except:
                     # Если поле скидочной цены не найдено, ищем поле "Qiymət"
                     discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiymət']"))
-                    ))
+                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiymət']")))
                     logging.info("Поле для скидочной цены не найдено, записываем цену в поле 'Qiymət'.")
 
                 # Записываем цену
