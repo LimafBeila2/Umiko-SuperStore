@@ -161,6 +161,7 @@ def process_product(product_url, edit_url, driver):
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
         
+        # Только если цена отличается и требует изменения
         if super_store_price is not None and lowest_price < super_store_price:
             logging.info("Меняем цену...")
 
@@ -205,7 +206,7 @@ def process_product(product_url, edit_url, driver):
 # Храним товары и их ссылки в коде
 products = [
     {
-        "product_url": "https://umico.az/product/450534-giorgio-armani-si-passione-eclat-qadinlar-uchun-etir-suyu-100-ml",
+        "product_url": "https://umico.az/product/339754-qadinlar-uchun-tualet-suyu-bvlgari-omnia-coral-65-ml",
         "edit_url": "https://business.umico.az/account/products/my/2576516"
     },
     {
