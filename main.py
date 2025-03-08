@@ -11,85 +11,80 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import random
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Список прокси
+proxies_list = [
+    "103.119.111.1:8080",
+    "103.119.111.2:8080",
+    "103.119.111.3:8080",
+]
+
+
+
+# Заголовки запроса
+headers = {
+    "Referer": "https://www.google.com/",
+    "sec-ch-ua": '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+}
+
 
 def create_driver():
-    logging.info("Создаю новый драйвер...")
-
-    # Опции для Chrome
     options = Options()
+    options.add_argument("--headless")  # Без графического интерфейса
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920x1080")
 
-    # Создаём экземпляр драйвера
-    driver = webdriver.Chrome(options=options)
+    # Выбираем случайный прокси
+    proxy = random.choice(proxies_list)
+    options.add_argument(f"--proxy-server={proxy}")
 
-    logging.info("Драйвер успешно создан.")
-    return driver
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
-# Функция для авторизации на странице
-def login_on_redirect(driver):
-    logging.info("Переходим на страницу редиректа...")
+    # Добавляем заголовки через CDP
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
+
+
+    return driver  # Возвращаем драйвер с прокси и заголовками
+# Функция для авторизации
+def login_to_umico(driver):
+    load_dotenv()
+    username = os.getenv("UMICO_USERNAME")
+    password = os.getenv("UMICO_PASSWORD")
+
+    if not username or not password:
+        raise ValueError("Ошибка: логин или пароль не найдены в .env")
+
+    driver.get("https://business.umico.az/sign-in")
+    login_input = WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
+    )
+    login_input.send_keys(username)
+    
+    password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
+    password_input.send_keys(password)
+    password_input.send_keys(Keys.RETURN)
+    
     try:
-        # Нажимаем на ссылку, которая перекидывает на главную страницу
-        redirect_link = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//a[@href='/']"))
-        )
-        redirect_link.click()
-        logging.info("Перешли на страницу https://business.umico.az/")
-    except Exception as e:
-        logging.error(f"Не удалось нажать на ссылку редиректа: {e}")
-        return False
-
-    try:
-        # Ожидаем, пока загрузится кнопка "Giriş"
-        login_button = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//span[@class='tw-justify-center tw-w-auto tw-items-center tw-flex !tw-break-keep tw-text-base tw-font-medium tw-tracking-normal tw-leading-normal'][text()='Giriş']"))
-        )
-        login_button.click()
-        logging.info("Нажали кнопку 'Giriş' для авторизации.")
-    except Exception as e:
-        logging.error(f"Не удалось нажать на кнопку 'Giriş': {e}")
-        return False
-
-    # После этого откроется страница для ввода логина и пароля
-    try:
-        load_dotenv()
-        username = os.getenv("UMICO_USERNAME")
-        password = os.getenv("UMICO_PASSWORD")
-
-        if not username or not password:
-            logging.error("Ошибка: логин или пароль не найдены в .env")
-            raise ValueError("Ошибка: логин или пароль не найдены в .env")
-
-        # Вводим логин
-        username_input = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
-        )
-        username_input.send_keys(username)
-
-        # Вводим пароль
-        password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
-        password_input.send_keys(password)
-        password_input.send_keys(Keys.RETURN)
-
-        # Ожидаем, пока загрузится нужная страница после авторизации
         WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
-        logging.info("Авторизация завершена успешно!")
-
-        return True
-    except Exception as e:
-        logging.error(f"Ошибка при авторизации: {e}")
-        return False
+        sleep(3)
+        logging.info("Успешный вход в Umico Business!")
+    except:
+        logging.error("Ошибка входа!")
+        driver.quit()
+        raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
 # Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
         # Здесь добавляется возможность выбора города "Баку"
-        logging.info("Пытаемся выбрать город Баку...")
         baku_option = WebDriverWait(driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
         )
@@ -98,11 +93,11 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
-# Функция для обработки одного товара
+# Функция обработки одного товара
 def process_product(product, driver):
-    logging.info(f"Обрабатываем товар с URL: {product['product_url']}")
     try:
         product_url, edit_url = product["product_url"], product["edit_url"]
+        logging.info(f"Обрабатываем товар: {product_url}")
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
@@ -114,7 +109,6 @@ def process_product(product, driver):
                 ))
             )
             button.click()
-            logging.info("Кнопка для просмотра цен найдена и нажата.")
         except:
             logging.warning("Не удалось найти кнопку просмотра цен.")
             return
@@ -177,9 +171,7 @@ def process_product(product, driver):
             logging.info("Меняем цену...")
 
             # Авторизация перед переходом на страницу редактирования
-            if not login_on_redirect(driver):
-                logging.error("Не удалось пройти авторизацию после редиректа.")
-                return
+            login_to_umico(driver)
 
             driver.get(edit_url)
             logging.info(f"Открыта страница изменения цены: {edit_url}")
@@ -209,7 +201,7 @@ def process_product(product, driver):
                 )
 
                 save_button.click()
-                logging.info("Цена обновлена! ")
+                logging.info("Цена обновлена!")
 
                 # После изменения цены пересоздаем драйвер
                 driver.quit()
@@ -224,16 +216,22 @@ def process_product(product, driver):
 
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
-    logging.info(f"Загружаем товары из файла: {json_file}")
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
 # Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
-    driver = create_driver()
-    products = load_json(json_file)
+    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
+    try:
+        products = load_json(json_file)
+        for product in products:
+            process_product(product, driver)
+    finally:
+        driver.quit()  # Закрываем драйвер после обработки всех товаров
 
-    for product in products:
-        process_product(product, driver)
-
-    driver.quit()
+# Бесконечный цикл
+if __name__ == "__main__":
+    while True:
+        process_products_from_json("product.json")
+        logging.info("Работа завершена, повторная обработка через 60 секунд...")
+        sleep(60)  # Пауза перед повторным запуском
