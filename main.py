@@ -36,47 +36,6 @@ CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
 COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
 
-
-def check_and_create_directory(path):
-    """Проверяем, существует ли директория, и если нет - создаем её."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-        logging.info(f"Директория {path} была создана.")
-    else:
-        logging.info(f"Директория {path} существует.")
-
-def check_directory_access(path):
-    """Проверяем доступность директории для записи."""
-    if os.access(path, os.W_OK):
-        logging.info(f"Доступ к директории {path} для записи разрешен.")
-    else:
-        logging.warning(f"Нет доступа к директории {path} для записи.")
-
-def load_cookies(driver, file_path=COOKIES_PATH):
-    """Загружаем cookies из файла."""
-    try:
-        if os.path.exists(file_path):
-            cookies = pickle.load(open(file_path, "rb"))
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-            logging.info("Cookies успешно загружены.")
-        else:
-            logging.warning(f"Файл cookies не найден: {file_path}")
-    except Exception as e:
-        logging.warning(f"Ошибка при загрузке cookies: {e}")
-
-def save_cookies(driver, file_path=COOKIES_PATH):
-    """Сохраняем cookies в файл."""
-    try:
-        cookies = driver.get_cookies()
-        with open(file_path, "wb") as file:
-            pickle.dump(cookies, file)
-        logging.info("Cookies успешно сохранены.")
-    except Exception as e:
-        logging.warning(f"Ошибка при сохранении cookies: {e}")
-
-
-
 # Заголовки запроса
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
@@ -116,7 +75,44 @@ def create_driver():
     return driver  # Возвращаем драйвер с профилем и заголовками
 
 
-# Функция для авторизации
+def check_and_create_directory(path):
+    """Проверяем, существует ли директория, и если нет - создаем её."""
+    if not os.path.exists(path):
+        os.makedirs(path)
+        logging.info(f"Директория {path} была создана.")
+    else:
+        logging.info(f"Директория {path} существует.")
+
+def check_directory_access(path):
+    """Проверяем доступность директории для записи."""
+    if os.access(path, os.W_OK):
+        logging.info(f"Доступ к директории {path} для записи разрешен.")
+    else:
+        logging.warning(f"Нет доступа к директории {path} для записи.")
+
+def load_cookies(driver, file_path=COOKIES_PATH):
+    """Загружаем cookies из файла."""
+    try:
+        if os.path.exists(file_path):
+            cookies = pickle.load(open(file_path, "rb"))
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+            logging.info("Cookies успешно загружены.")
+        else:
+            logging.warning(f"Файл cookies не найден: {file_path}")
+    except Exception as e:
+        logging.warning(f"Ошибка при загрузке cookies: {e}")
+
+def save_cookies(driver, file_path=COOKIES_PATH):
+    """Сохраняем cookies в файл."""
+    try:
+        cookies = driver.get_cookies()
+        with open(file_path, "wb") as file:
+            pickle.dump(cookies, file)
+        logging.info("Cookies успешно сохранены.")
+    except Exception as e:
+        logging.warning(f"Ошибка при сохранении cookies: {e}")
+
 # Функция для авторизации в Umico
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
