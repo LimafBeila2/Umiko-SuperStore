@@ -39,7 +39,7 @@ headers = {
 
 }
 
-Папка для хранения профиля в контейнере Railway
+#Папка для хранения профиля в контейнере Railway
 
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 
