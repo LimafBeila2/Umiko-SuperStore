@@ -77,6 +77,10 @@ def save_cookies(driver, file_path=COOKIES_PATH):
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
+
+    # Автоматическая установка правильной версии ChromeDriver
+    chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
     # Проверяем и создаем директории, если необходимо
     check_and_create_directory(os.path.dirname(COOKIES_PATH))
     check_and_create_directory(CHROME_PROFILE_PATH)
@@ -84,10 +88,6 @@ def create_driver():
     # Проверяем права доступа к директориям
     check_directory_access(CHROME_PROFILE_PATH)
     check_directory_access(os.path.dirname(COOKIES_PATH))
-
-    # Автоматическая установка правильной версии ChromeDriver
-    chromedriver_autoinstaller.install()
-    logging.info("ChromeDriver успешно установлен.")
 
     options = Options()
     options.add_argument("--no-sandbox")
