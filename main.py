@@ -77,6 +77,14 @@ def save_cookies(driver, file_path=COOKIES_PATH):
 
 
 
+# Заголовки запроса
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+}
+
+# Папка для хранения профиля в контейнере Railway
+CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
@@ -86,6 +94,7 @@ def create_driver():
     logging.info("ChromeDriver успешно установлен.")
     check_directory_access(CHROME_PROFILE_PATH)
     check_directory_access(os.path.dirname(COOKIES_PATH))
+
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -105,9 +114,6 @@ def create_driver():
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
     return driver  # Возвращаем драйвер с профилем и заголовками
-
-
-
 
 
 # Функция для авторизации
