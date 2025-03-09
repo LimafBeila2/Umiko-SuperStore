@@ -32,12 +32,14 @@ headers = {
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
-def save_cookies(driver, file_path="cookies.pkl"):
+COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
+
+def save_cookies(driver, file_path=COOKIES_PATH):
     """Сохраняем cookies в файл"""
     pickle.dump(driver.get_cookies(), open(file_path, "wb"))
     logging.info("Cookies успешно сохранены.")
 
-def load_cookies(driver, file_path="cookies.pkl"):
+def load_cookies(driver, file_path=COOKIES_PATH):
     """Загружаем cookies из файла"""
     try:
         cookies = pickle.load(open(file_path, "rb"))
