@@ -206,21 +206,31 @@ def process_product(product, driver):
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
         sleep(2)
-        
+
+        # Проверяем, что мы на правильной странице
+        try:
+            WebDriverWait(driver, 10).until(EC.url_contains("edit"))  # или другой нужный путь
+            logging.info("Мы на правильной странице.")
+        except Exception as e:
+            logging.error(f"Не на правильной странице. Текущий URL: {driver.current_url}")
+
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
             )
             save_button.click()
-            logging.info("Кнопка 'Готово' нажата!")
+            logging.info("Кнопка 'Готово' была нажата.")
             sleep(2)
             
         except Exception as e:
+            current_url = driver.current_url
             logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
+            logging.error(f"Текущий URL: {current_url}")
    
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
