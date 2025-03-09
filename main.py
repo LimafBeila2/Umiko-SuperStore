@@ -36,43 +36,6 @@ COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def check_and_create_directory(path):
-    """Проверяем, существует ли директория, и если нет - создаем её."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-        logging.info(f"Директория {path} была создана.")
-    else:
-        logging.info(f"Директория {path} существует.")
-
-def check_directory_access(path):
-    """Проверяем доступность директории для записи."""
-    if os.access(path, os.W_OK):
-        logging.info(f"Доступ к директории {path} для записи разрешен.")
-    else:
-        logging.warning(f"Нет доступа к директории {path} для записи.")
-
-def load_cookies(driver, file_path=COOKIES_PATH):
-    """Загружаем cookies из файла."""
-    try:
-        if os.path.exists(file_path):
-            cookies = pickle.load(open(file_path, "rb"))
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-            logging.info("Cookies успешно загружены.")
-        else:
-            logging.warning(f"Файл cookies не найден: {file_path}")
-    except Exception as e:
-        logging.warning(f"Ошибка при загрузке cookies: {e}")
-
-def save_cookies(driver, file_path=COOKIES_PATH):
-    """Сохраняем cookies в файл."""
-    try:
-        cookies = driver.get_cookies()
-        with open(file_path, "wb") as file:
-            pickle.dump(cookies, file)
-        logging.info("Cookies успешно сохранены.")
-    except Exception as e:
-        logging.warning(f"Ошибка при сохранении cookies: {e}")
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
@@ -82,12 +45,6 @@ def create_driver():
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
     # Проверяем и создаем директории, если необходимо
-    check_and_create_directory(os.path.dirname(COOKIES_PATH))
-    check_and_create_directory(CHROME_PROFILE_PATH)
-
-    # Проверяем права доступа к директориям
-    check_directory_access(CHROME_PROFILE_PATH)
-    check_directory_access(os.path.dirname(COOKIES_PATH))
 
     options = Options()
     options.add_argument("--no-sandbox")
