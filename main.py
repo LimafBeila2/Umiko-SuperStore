@@ -213,6 +213,12 @@ def process_product(product, driver):
             logging.info("Мы на правильной странице.")
         except Exception as e:
             logging.error(f"Не на правильной странице. Текущий URL: {driver.current_url}")
+            
+            # Если мы не на нужной странице, повторно авторизуемся
+            login_to_umico(driver)  # Функция авторизации, если не на нужной странице
+            driver.get(edit_url)  # Переходим снова на страницу редактирования
+            logging.info(f"Повторно открыта страница изменения цены: {edit_url}")
+            sleep(2)
 
         # Находим кнопку "Готово" и нажимаем ее
         try:
