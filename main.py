@@ -74,16 +74,6 @@ def create_driver():
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
-def save_cookies(driver, file_path=COOKIES_PATH):
-    """Сохраняем cookies в файл."""
-    try:
-        cookies = driver.get_cookies()
-        with open(file_path, "wb") as file:
-            pickle.dump(cookies, file)
-        logging.info("Cookies успешно сохранены.")
-    except Exception as e:
-        logging.warning(f"Ошибка при сохранении cookies: {e}")
-
 # Функция для авторизации в Umico
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
