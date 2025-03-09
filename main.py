@@ -13,9 +13,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
-import pickle
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 
 # Список прокси
 proxies_list = [
@@ -30,21 +31,15 @@ headers = {
 }
 
 # Папка для хранения профиля в контейнере Railway
-# Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
-COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
-
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
-    # Проверяем и создаем директории, если необходимо
 
     options = Options()
     options.add_argument("--no-sandbox")
@@ -52,18 +47,24 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
-    # Устанавливаем переменные окружения для Chromium и ChromeDriver
-    chrome_bin = os.environ.get("CHROME_BIN", "/usr/bin/chromium")
-    chromedriver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+    # Выбираем случайный прокси (если используется)
+    # proxy = random.choice(proxies_list)
+    # options.add_argument(f"--proxy-server={proxy}")
 
-    options.binary_location = chrome_bin
-    driver = webdriver.Chrome(executable_path=chromedriver_path, options=options)
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
+
+    # Добавляем заголовки через CDP
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
 
+# Функция для авторизации
+# Функция для авторизации в Umico
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
     load_dotenv()  # Загружаем переменные окружения из файла .env
@@ -75,23 +76,7 @@ def login_to_umico(driver):
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
     logging.info("Открываем страницу авторизации Umico...")
-
-    # Проверяем, если есть cookies
-    if os.path.exists("cookies.pkl"):
-        logging.info("Загружаем cookies...")
-        driver.get("https://business.umico.az/account/orders")
-        sleep(3)
-        
-        try:
-            # Проверяем, если мы успешно вошли
-            WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
-            logging.info("Успешный вход с помощью cookies!")
-            return
-        except Exception as e:
-            logging.warning(f"Ошибка входа с cookies: {e}")
-            logging.info("Cookies не работают, повторный вход...")
-    
-    # Если cookies не подходят или не существуют, проходим вход с логином и паролем
+    # Открываем страницу авторизации
     driver.get("https://business.umico.az/sign-in")
     
     # Ожидаем, пока появится поле для ввода логина
@@ -112,13 +97,12 @@ def login_to_umico(driver):
         WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
         sleep(3)  # Пауза для полной загрузки страницы
         logging.info("Успешный вход в Umico Business!")
-        
-        # Сохраняем cookies для дальнейших сессий
     except:
         logging.error("Ошибка входа!")
         driver.quit()  # Закрываем драйвер
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
+# Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
         # Здесь добавляется возможность выбора города "Баку"
@@ -131,6 +115,8 @@ def close_ad(driver):
     except:
         logging.info("Окно выбора города не появилось.")
 
+# Функция обработки одного товара
+# Функция обработки одного товара
 def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
@@ -212,8 +198,67 @@ def process_product(product, driver):
         if lowest_price <= 80.1:
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
+        sleep(2)
+        
+        # Переходим на страницу редактирования товара
+        logging.info("Открываем страницу изменения цены...")
 
-        logging.info(f"Процесс обработки товара завершён.")
+        driver.get(edit_url)
+        logging.info(f"Открыта страница изменения цены: {edit_url}")
+        sleep(2)
 
+        # Проверяем, что мы на правильной странице
+        try:
+            WebDriverWait(driver, 10).until(EC.url_contains("edit"))  # или другой нужный путь
+            logging.info("Мы на правильной странице.")
+        except Exception as e:
+            logging.error(f"Не на правильной странице. Текущий URL: {driver.current_url}")
+            
+            # Если мы не на нужной странице, повторно авторизуемся
+            login_to_umico(driver)  # Функция авторизации, если не на нужной странице
+            driver.get(edit_url)  # Переходим снова на страницу редактирования
+            logging.info(f"Повторно открыта страница изменения цены: {edit_url}")
+            sleep(2)
+
+        # Находим кнопку "Готово" и нажимаем ее
+        try:
+            save_button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+            )
+            save_button.click()
+            logging.info("Кнопка 'Готово' была нажата.")
+            sleep(2)
+            
+        except Exception as e:
+            current_url = driver.current_url
+            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
+            logging.error(f"Текущий URL: {current_url}")
+   
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+
+# Функция для загрузки товаров из JSON
+def load_json(json_file):
+    logging.info(f"Загружаем товары из файла {json_file}...")
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# Функция для обработки товаров из JSON
+def process_products_from_json(json_file):
+    logging.info("Создаем драйвер для обработки товаров...")
+    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
+    try:
+        products = load_json(json_file)
+        for product in products:
+            logging.info(f"Обрабатываем товар {product['product_url']}")
+            process_product(product, driver)
+    finally:
+        driver.quit()  # Закрываем драйвер после обработки всех товаров
+
+# Бесконечный цикл
+if __name__ == "__main__":
+    while True:
+        logging.info("Запускаем процесс обработки товаров...")
+        process_products_from_json("product.json")
+        logging.info("Работа завершена, повторная обработка через 60 секунд...")
+        sleep(60)  # Пауза перед повторным запуском
