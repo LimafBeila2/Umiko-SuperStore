@@ -34,13 +34,13 @@ RUN /opt/venv/bin/pip install --upgrade pip
 
 # Копируем requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/requirements.txt
-RUN /opt/venv/bin/pip install -r /app/requirements.txt
+RUN /opt/venv/bin/pip install -r /selenium/requirements.txt
 
 # Явно устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
 # Копируем все файлы приложения в контейнер
-COPY . /app
+COPY . /selenium 
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
@@ -50,8 +50,8 @@ ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
-WORKDIR /app
+WORKDIR /selenium 
 
 # Создаем папки для профиля Chrome и cookies, даем права на запись
-RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
-    chmod -R 777 /app/tmp/chrome_profile /app/tmp/cookies
+RUN mkdir -p /tmp/chrome_profile /app/tmp/cookies && \
+    chmod -R 777 /tmp/chrome_profile /app/tmp/cookies
