@@ -199,53 +199,28 @@ def process_product(product, driver):
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
         sleep(2)
-        if super_store_price is not None and lowest_price < super_store_price:
-            logging.info("Меняем цену...")
+        
+        # Переходим на страницу редактирования товара
+        logging.info("Открываем страницу изменения цены...")
 
-            # Авторизация перед переходом на страницу редактирования
-            login_to_umico(driver)
-
-            driver.get(edit_url)
-            logging.info(f"Открыта страница изменения цены: {edit_url}")
+        driver.get(edit_url)
+        logging.info(f"Открыта страница изменения цены: {edit_url}")
+        sleep(2)
+        
+        # Находим кнопку "Готово" и нажимаем ее
+        try:
+            save_button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+            )
+            save_button.click()
+            logging.info("Кнопка 'Готово' нажата!")
             sleep(2)
-            # Логируем текущий URL после загрузки страницы
-            logging.info(f"Текущий URL: {driver.current_url}")
             
-            try:
-                # Проверяем наличие поля для скидочной цены
-                try:
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")))
-                    logging.info("Поле для скидочной цены найдено.")
-                except:
-                    # Если поле скидочной цены не найдено, ищем поле "Qiymət"
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Qiymət']")))
-                    logging.info("Поле для скидочной цены не найдено, записываем цену в поле 'Qiymət'.")
-
-                # Записываем цену
-                discount_input.clear()
-                discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
-
-                save_button = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                )
-                sleep(2)
-                save_button.click()
-                logging.info("Цена обновлена!")
-                sleep(2)
-                # После изменения цены пересоздаем драйвер
-                driver.quit()
-                driver = create_driver()
-                logging.info("Пересоздан новый драйвер.")
-
-            except Exception as e:
-                logging.error(f"Ошибка при установке скидочной цены: {e}")
+        except Exception as e:
+            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
    
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
-
 # Функция для загрузки товаров из JSON
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
