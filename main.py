@@ -30,8 +30,6 @@ import chromedriver_autoinstaller
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-Список прокси
-
 
 Заголовки запроса
 
