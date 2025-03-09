@@ -30,7 +30,7 @@ headers = {
 }
 
 # Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
 def save_cookies(driver, file_path="cookies.pkl"):
     """Сохраняем cookies в файл"""
