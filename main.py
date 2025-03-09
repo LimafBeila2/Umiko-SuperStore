@@ -45,7 +45,15 @@ def load_cookies(driver, file_path=COOKIES_PATH):
         logging.warning(f"Файл cookies не найден: {file_path}")
     except Exception as e:
         logging.warning(f"Ошибка при загрузке cookies: {e}")
-
+def save_cookies(driver, file_path=COOKIES_PATH):
+    """Сохраняем cookies в файл"""
+    try:
+        cookies = driver.get_cookies()
+        with open(file_path, "wb") as file:
+            pickle.dump(cookies, file)
+        logging.info("Cookies успешно сохранены.")
+    except Exception as e:
+        logging.warning(f"Ошибка при сохранении cookies: {e}")
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
