@@ -30,23 +30,42 @@ headers = {
 }
 
 # Папка для хранения профиля в контейнере Railway
+# Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
-
 COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+def check_and_create_directory(path):
+    """Проверяем, существует ли директория, и если нет - создаем её."""
+    if not os.path.exists(path):
+        os.makedirs(path)
+        logging.info(f"Директория {path} была создана.")
+    else:
+        logging.info(f"Директория {path} существует.")
+
+def check_directory_access(path):
+    """Проверяем доступность директории для записи."""
+    if os.access(path, os.W_OK):
+        logging.info(f"Доступ к директории {path} для записи разрешен.")
+    else:
+        logging.warning(f"Нет доступа к директории {path} для записи.")
+
 def load_cookies(driver, file_path=COOKIES_PATH):
-    """Загружаем cookies из файла"""
+    """Загружаем cookies из файла."""
     try:
-        cookies = pickle.load(open(file_path, "rb"))
-        for cookie in cookies:
-            driver.add_cookie(cookie)
-        logging.info("Cookies успешно загружены.")
-    except FileNotFoundError:
-        logging.warning(f"Файл cookies не найден: {file_path}")
+        if os.path.exists(file_path):
+            cookies = pickle.load(open(file_path, "rb"))
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+            logging.info("Cookies успешно загружены.")
+        else:
+            logging.warning(f"Файл cookies не найден: {file_path}")
     except Exception as e:
         logging.warning(f"Ошибка при загрузке cookies: {e}")
+
 def save_cookies(driver, file_path=COOKIES_PATH):
-    """Сохраняем cookies в файл"""
+    """Сохраняем cookies в файл."""
     try:
         cookies = driver.get_cookies()
         with open(file_path, "wb") as file:
@@ -57,6 +76,14 @@ def save_cookies(driver, file_path=COOKIES_PATH):
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
+
+    # Проверяем и создаем директории, если необходимо
+    check_and_create_directory(os.path.dirname(COOKIES_PATH))
+    check_and_create_directory(CHROME_PROFILE_PATH)
+
+    # Проверяем права доступа к директориям
+    check_directory_access(CHROME_PROFILE_PATH)
+    check_directory_access(os.path.dirname(COOKIES_PATH))
 
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
@@ -77,7 +104,7 @@ def create_driver():
     driver = webdriver.Chrome(executable_path=chromedriver_path, options=options)
     logging.info("WebDriver создан.")
 
-    return driver
+    return driver  # Возвращаем драйвер с профилем и заголовками
 
 
 def login_to_umico(driver):
