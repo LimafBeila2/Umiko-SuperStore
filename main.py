@@ -124,7 +124,6 @@ def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
         sleep(10)
-        login_to_umico
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Открываем страницу товара: {product_url}")
         driver.get(product_url)
