@@ -49,8 +49,6 @@ def create_driver():
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
-    check_directory_access(CHROME_PROFILE_PATH)
-    check_directory_access(os.path.dirname(COOKIES_PATH))
 
     options = Options()
     options.add_argument("--no-sandbox")
