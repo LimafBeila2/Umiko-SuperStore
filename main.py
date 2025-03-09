@@ -31,8 +31,6 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
 
-# Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
 COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
 
