@@ -79,7 +79,6 @@ def login_to_umico(driver):
     # Проверяем, если есть cookies
     if os.path.exists("cookies.pkl"):
         logging.info("Загружаем cookies...")
-        load_cookies(driver)
         driver.get("https://business.umico.az/account/orders")
         sleep(3)
         
@@ -115,7 +114,6 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
         
         # Сохраняем cookies для дальнейших сессий
-        save_cookies(driver)
     except:
         logging.error("Ошибка входа!")
         driver.quit()  # Закрываем драйвер
