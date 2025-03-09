@@ -32,15 +32,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 Список прокси
 
-proxies_list = [
-
-"103.119.111.1:8080",
-
-"103.119.111.2:8080",
-
-"103.119.111.3:8080",
-
-]
 
 Заголовки запроса
 
