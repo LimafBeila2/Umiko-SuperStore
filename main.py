@@ -74,35 +74,6 @@ def create_driver():
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
-
-def check_and_create_directory(path):
-    """Проверяем, существует ли директория, и если нет - создаем её."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-        logging.info(f"Директория {path} была создана.")
-    else:
-        logging.info(f"Директория {path} существует.")
-
-def check_directory_access(path):
-    """Проверяем доступность директории для записи."""
-    if os.access(path, os.W_OK):
-        logging.info(f"Доступ к директории {path} для записи разрешен.")
-    else:
-        logging.warning(f"Нет доступа к директории {path} для записи.")
-
-def load_cookies(driver, file_path=COOKIES_PATH):
-    """Загружаем cookies из файла."""
-    try:
-        if os.path.exists(file_path):
-            cookies = pickle.load(open(file_path, "rb"))
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-            logging.info("Cookies успешно загружены.")
-        else:
-            logging.warning(f"Файл cookies не найден: {file_path}")
-    except Exception as e:
-        logging.warning(f"Ошибка при загрузке cookies: {e}")
-
 def save_cookies(driver, file_path=COOKIES_PATH):
     """Сохраняем cookies в файл."""
     try:
