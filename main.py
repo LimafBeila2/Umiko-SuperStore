@@ -207,7 +207,7 @@ def process_product(product, driver):
 
             driver.get(edit_url)
             logging.info(f"Открыта страница изменения цены: {edit_url}")
- 
+            sleep(2)
             # Логируем текущий URL после загрузки страницы
             logging.info(f"Текущий URL: {driver.current_url}")
             
