@@ -34,7 +34,7 @@ RUN /opt/venv/bin/pip install --upgrade pip
 
 # Копируем requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/requirements.txt
-RUN /opt/venv/bin/pip install -r /selenium/requirements.txt
+RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
 # Явно устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
