@@ -63,18 +63,16 @@ def create_driver():
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
 
-    # Выбираем случайный прокси (если используется)
-    # proxy = random.choice(proxies_list)
-    # options.add_argument(f"--proxy-server={proxy}")
+    # Устанавливаем переменные окружения для Chromium и ChromeDriver
+    chrome_bin = os.environ.get("CHROME_BIN", "/usr/bin/chromium")
+    chromedriver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
 
-    # Создаем драйвер
-    driver = webdriver.Chrome(options=options)
+    options.binary_location = chrome_bin
+    driver = webdriver.Chrome(executable_path=chromedriver_path, options=options)
     logging.info("WebDriver создан.")
 
-    # Добавляем заголовки через CDP
-    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+    return driver
 
-    return driver  # Возвращаем драйвер с профилем и заголовками
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
