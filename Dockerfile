@@ -55,6 +55,3 @@ WORKDIR /app
 # Создаем папки для профиля Chrome и cookies, даем права на запись
 RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
     chmod -R 777 /app/tmp/chrome_profile /app/tmp/cookies
-
-# Запускаем приложение
-CMD ["python", "main.py"]
