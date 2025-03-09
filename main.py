@@ -34,7 +34,7 @@ CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
 COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
 
-def load_cookies(driver, file_path="cookies.pkl"):
+def load_cookies(driver, file_path=COOKIES_PATH):
     """Загружаем cookies из файла"""
     try:
         cookies = pickle.load(open(file_path, "rb"))
@@ -45,6 +45,7 @@ def load_cookies(driver, file_path="cookies.pkl"):
         logging.warning(f"Файл cookies не найден: {file_path}")
     except Exception as e:
         logging.warning(f"Ошибка при загрузке cookies: {e}")
+
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
