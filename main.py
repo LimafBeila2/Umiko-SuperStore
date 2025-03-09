@@ -44,49 +44,27 @@ headers = {
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 
 def create_driver():
+    logging.info("Создаем новый WebDriver...")
 
-logging.info("Создаем новый WebDriver...")
+    # Автоматическая установка правильной версии ChromeDriver
+    chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
 
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
+    logging.info("WebDriver создан.")
 
-# Автоматическая установка правильной версии ChromeDriver
+    # Добавляем заголовки через CDP
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-chromedriver_autoinstaller.install()
-
-logging.info("ChromeDriver успешно установлен.")
-
-
-
-options = Options()
-
-options.add_argument("--no-sandbox")
-
-options.add_argument("--headless")  # Для серверной среды
-
-options.add_argument("--disable-dev-shm-usage")
-
-options.add_argument("--window-size=1920x1080")
-
-options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-
-options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-
-
-
-# Выбираем случайный прокси (если используется)
-
-# proxy = random.choice(proxies_list)
-
-# options.add_argument(f"--proxy-server={proxy}")
-
-
-
-# Создаем драйвер
-
-driver = webdriver.Chrome(options=options)
-
-logging.info("WebDriver создан.")
-
+    return driver  # Возвращаем драйвер с профилем и заголовками
 
 
 # Добавляем заголовки через CDP
@@ -97,9 +75,9 @@ driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
 return driver  # Возвращаем драйвер с профилем и заголовками
 
-Функция для авторизации
+#Функция для авторизации
 
-Функция для авторизации в Umico
+#Функция для авторизации в Umico
 
 def login_to_umico(driver):
 
