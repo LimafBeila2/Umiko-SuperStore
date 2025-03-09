@@ -50,8 +50,7 @@ ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
-WORKDIR /selenium 
+WORKDIR /selenium
 
-# Создаем папки для профиля Chrome и cookies, даем права на запись
-RUN mkdir -p /tmp/chrome_profile /app/tmp/cookies && \
-    chmod -R 777 /tmp/chrome_profile /app/tmp/cookies
+# Запускаем скрипт
+CMD ["python", "main.py"]
