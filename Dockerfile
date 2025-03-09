@@ -52,8 +52,9 @@ ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 # Указываем рабочую директорию
 WORKDIR /app
 
-# Создаем папку для профиля Chrome (если ее нет)
-RUN mkdir -p /tmp/chrome_profile
+# Создаем папки для профиля Chrome и cookies
+RUN mkdir -p /app/tmp/chrome_profile
+RUN mkdir -p /app/tmp/cookies
 
 # Запускаем приложение
 CMD ["python", "main.py"]
