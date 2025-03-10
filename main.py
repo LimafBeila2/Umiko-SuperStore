@@ -31,7 +31,7 @@ def create_driver():
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")
     options.add_argument("--headless")
 
-    driver = uc.Chrome(options=options)
+    driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
     
     stealth(driver,
