@@ -24,7 +24,7 @@ headers = {
 }
 
 # Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+# CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
