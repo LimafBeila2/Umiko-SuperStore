@@ -49,8 +49,8 @@ def create_driver():
     # Применяем stealth, чтобы скрыть использование Selenium
     stealth(driver,
         user_agent=headers["User-Agent"],
-        languages=["en-US", "en"],
-        timezone_id="America/New_York",  # Укажите подходящий часовой пояс
+        languages=["az", "ru", "en"],  # Азербайджанский, русский, английский
+        timezone_id="Asia/Baku",  # Часовой пояс Азербайджан
         platform="Win32"
     )
 
