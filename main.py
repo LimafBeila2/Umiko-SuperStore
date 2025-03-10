@@ -17,15 +17,19 @@ from selenium_stealth import stealth
 import undetected_chromedriver as uc
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Устанавливаем правильные пути для разных систем
+if os.name == 'nt':  # Для Windows
+    CHROMEDRIVER_PATH = "C:/Users/Famka/.vscode/selenium/chromedriver-win32/chromedriver.exe"
+else:  # Для Linux, например, в Docker
+    CHROMEDRIVER_PATH = "/usr/bin/chromedriver"
+
+CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
+
 # Заголовки запроса
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
-
-# Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
-CHROMEDRIVER_PATH = "C:/Users/Famka/.vscode/selenium/chromedriver-win32/chromedriver.exe"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
@@ -38,8 +42,11 @@ def create_driver():
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
-    # Создаем драйвер с указанием пути к локальному ChromeDriver
-    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=options)
+    # Создаем объект сервиса для драйвера
+    service = Service(executable_path=CHROMEDRIVER_PATH)
+    
+    # Создаем драйвер с указанием сервиса и опций
+    driver = webdriver.Chrome(service=service, options=options)
     logging.info("WebDriver создан.")
 
     # Маскируем Selenium с помощью selenium-stealth
@@ -59,7 +66,6 @@ def create_driver():
     load_cookies(driver)
 
     return driver  # Возвращаем драйвер с профилем и заголовками
-
 def load_cookies(driver):
     if os.path.exists(COOKIES_PATH):
         logging.info("Загружаем куки...")
