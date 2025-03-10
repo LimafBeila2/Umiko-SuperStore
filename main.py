@@ -38,7 +38,7 @@ def create_driver():
 
     options = Options()
     options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--disable-dev-shm-usage")
     # options.add_argument("--window-size=1920x1080")
     # options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
@@ -50,15 +50,15 @@ def create_driver():
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
 
-    # Применяем stealth, чтобы скрыть использование Selenium
-    stealth(driver,
-        user_agent=headers["User-Agent"],
-        languages=["az", "ru"],
-        timezone_id="Asia/Baku",
-        platform="Win32"
-    )
-    # Добавляем заголовки через CDP
-    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+    # # Применяем stealth, чтобы скрыть использование Selenium
+    # stealth(driver,
+    #     user_agent=headers["User-Agent"],
+    #     languages=["az", "ru"],
+    #     timezone_id="Asia/Baku",
+    #     platform="Win32"
+    # )
+    # # Добавляем заголовки через CDP
+    # driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
 
 
