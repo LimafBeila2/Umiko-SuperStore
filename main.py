@@ -30,6 +30,7 @@ COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
+
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
