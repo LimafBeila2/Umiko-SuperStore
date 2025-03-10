@@ -25,8 +25,8 @@ headers = {
 
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
-# После создания драйвера, примените stealth
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
@@ -34,33 +34,40 @@ def create_driver():
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
 
+
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-    options.add_argument('--disable-service-worker')
-    options.add_argument('--disable-application-cache')
-    options.add_argument('--disk-cache-size=1')
+
     # Создаем драйвер
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
 
-    # Применяем stealth, чтобы скрыть использование Selenium
-    stealth(driver,
-        user_agent=headers["User-Agent"],
-        languages=["az", "ru"],
-        timezone_id="Asia/Baku",
-        platform="Win32"
-    )
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-
-
+    # Загружаем куки, если они есть
+    load_cookies(driver)
 
     return driver  # Возвращаем драйвер с профилем и заголовками
+
+def load_cookies(driver):
+    if os.path.exists(COOKIES_PATH):
+        logging.info("Загружаем куки...")
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Куки загружены.")
+
+def save_cookies(driver):
+    cookies = driver.get_cookies()
+    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Куки сохранены.")
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -96,6 +103,7 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
+        save_cookies(driver)
     except Exception as e:
         logging.error("Ошибка входа!")
         logging.exception(e)
@@ -231,6 +239,7 @@ def process_product(product, driver):
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
     with open(json_file, "r", encoding="utf-8") as f:
