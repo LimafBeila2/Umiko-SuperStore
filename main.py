@@ -14,7 +14,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
 import pickle
-import undetected_chromedriver
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -30,9 +29,6 @@ headers = {
 CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
 
 COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
-
-
-
 
 
 def check_and_create_directory(path):
@@ -79,32 +75,29 @@ def save_cookies(driver, file_path=COOKIES_PATH):
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 
 
-
-
 def create_driver():
     logging.info("Создаем новый WebDriver...")
-    driver=undetected_chromedriver.Chrome()
 
-#     # Автоматическая установка правильной версии ChromeDriver
-#     chromedriver_autoinstaller.install()
-#     logging.info("ChromeDriver успешно установлен.")
-#     check_directory_access(CHROME_PROFILE_PATH)
-#     check_directory_access(os.path.dirname(COOKIES_PATH))
+    # Автоматическая установка правильной версии ChromeDriver
+    chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
+    check_directory_access(CHROME_PROFILE_PATH)
+    check_directory_access(os.path.dirname(COOKIES_PATH))
 
-#     options = Options()
-#     options.add_argument("--no-sandbox")
-#     options.add_argument("--disable-dev-shm-usage")
-#     options.add_argument("--disable-blink-features=AutonationControlled")
-#     options.add_argument("--window-size=1920x1080")
-#     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-#     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-#     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
-#     # Выбираем случайный прокси (если используется)
-#     # proxy = random.choice(proxies_list)
-#     # options.add_argument(f"--proxy-server={proxy}")
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutonationControlled")
+    options.add_argument("--window-size=1920x1080")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
+    # Выбираем случайный прокси (если используется)
+    # proxy = random.choice(proxies_list)
+    # options.add_argument(f"--proxy-server={proxy}")
 
-#     # Создаем драйвер
-#     driver = webdriver.Chrome(options=options)
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
     return driver  # Возвращаем драйвер с профилем и заголовками
 
@@ -124,6 +117,7 @@ def login_to_umico(driver):
     logging.info("Открываем страницу авторизации Umico...")
     # Открываем страницу авторизации
     driver.get("https://business.umico.az/sign-in")
+    
     
     # Ожидаем, пока появится поле для ввода логина
     login_input = WebDriverWait(driver, 30).until(
