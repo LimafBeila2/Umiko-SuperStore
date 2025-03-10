@@ -39,8 +39,8 @@ RUN /opt/venv/bin/pip install -r /app/requirements.txt
 # Устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
-# Копируем ChromeDriver в контейнер (если хочешь использовать свой локальный драйвер)
-COPY ./path/to/chromedriver.exe /usr/bin/chromedriver
+# Копируем ChromeDriver в контейнер (согласно реальному пути)
+COPY ./selenium/chromedriver-win32/chromedriver.exe /usr/bin/chromedriver
 
 # Копируем все файлы приложения в контейнер
 COPY . /app
