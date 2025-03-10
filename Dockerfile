@@ -40,9 +40,6 @@ RUN /opt/venv/bin/pip install -r /app/requirements.txt
 # Явно устанавливаем chromedriver-autoinstaller и selenium-stealth
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller selenium-stealth==1.0.6
 
-# Устанавливаем права для chromedriver и chromium
-RUN chmod -R 755 /usr/bin/chromium /usr/bin/chromedriver
-
 # Копируем все файлы приложения в контейнер
 COPY . /selenium
 
