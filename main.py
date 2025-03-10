@@ -148,8 +148,10 @@ def process_product(product, driver):
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
             button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH,
-                    "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')] or //div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"
-                ))
+                    "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+            ) or WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH,
+                    "//div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"))
             )
             logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата.")
             button.click()  # Нажимаем кнопку
@@ -163,15 +165,16 @@ def process_product(product, driver):
             try:
                 button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH,
-                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')] or //div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"
-                    ))
+                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+                ) or WebDriverWait(driver, 30).until(
+                    EC.element_to_be_clickable((By.XPATH,
+                        "//div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"))
                 )
                 button.click()
                 logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата после прокрутки.")
             except Exception as e:
                 logging.warning(f"Не удалось найти кнопку для просмотра цен после прокрутки: {e}")
                 logging.info(f"Не удалось найти кнопку после прокрутки. Текущий URL: {driver.current_url}")  # Логируем текущий URL
-
                 return  # Выход из функции, если кнопка не найдена
 
         logging.info("Ожидаем загрузки предложений по товару...")
