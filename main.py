@@ -39,7 +39,8 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
+    # options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
+    options.add_argument("--disable-blink-features=AutomationControler")
     options.add_argument('--disable-service-worker')
     options.add_argument('--disable-application-cache')
     options.add_argument('--disk-cache-size=1')
