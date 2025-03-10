@@ -39,6 +39,9 @@ RUN /opt/venv/bin/pip install -r /app/requirements.txt
 # Устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
+# Копируем ChromeDriver в контейнер (если хочешь использовать свой локальный драйвер)
+COPY ./path/to/chromedriver.exe /usr/bin/chromedriver
+
 # Копируем все файлы приложения в контейнер
 COPY . /app
 
@@ -58,3 +61,6 @@ RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
 
 # Порты, которые могут понадобиться для связи с контейнером (если нужны)
 EXPOSE 8080
+
+# Указываем команду по умолчанию для контейнера (если необходимо)
+CMD ["python", "your_script.py"]

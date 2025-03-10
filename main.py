@@ -25,14 +25,12 @@ headers = {
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
+CHROMEDRIVER_PATH = "C:/Users/Famka/.vscode/selenium/chromedriver-win32/chromedriver.exe"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
-    # Автоматическая установка правильной версии ChromeDriver
-    chromedriver_autoinstaller.install()
-    logging.info("ChromeDriver успешно установлен.")
-
+    # Указываем путь к локальному ChromeDriver
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -40,8 +38,8 @@ def create_driver():
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
-    # Создаем драйвер
-    driver = webdriver.Chrome(options=options)
+    # Создаем драйвер с указанием пути к локальному ChromeDriver
+    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=options)
     logging.info("WebDriver создан.")
 
     # Маскируем Selenium с помощью selenium-stealth
@@ -71,6 +69,11 @@ def load_cookies(driver):
                 driver.add_cookie(cookie)
         logging.info("Куки загружены.")
 
+def save_cookies(driver):
+    cookies = driver.get_cookies()
+    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Куки сохранены.")
 def save_cookies(driver):
     cookies = driver.get_cookies()
     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
