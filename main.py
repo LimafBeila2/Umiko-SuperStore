@@ -141,16 +141,34 @@ def process_product(product, driver):
         sleep(2)
         close_ad(driver)
 
+        # Логируем текущий URL
+        logging.info(f"Текущий URL: {driver.current_url}")
+
         try:
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
             button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH,"//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-                                            ))
-                                            )
-            logging.info("Кнопка для просмотра цен всех продавцов была нажата.")
+                EC.element_to_be_clickable((By.XPATH,
+                    "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                ))
+            )
+            logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата.")
         except Exception as e:
             logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
-            return
+
+            # Прокрутка страницы вниз, чтобы кнопка стала видимой
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            sleep(2)
+            try:
+                button = WebDriverWait(driver, 30).until(
+                    EC.element_to_be_clickable((By.XPATH,
+                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                    ))
+                )
+                button.click()
+                logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата после прокрутки.")
+            except Exception as e:
+                logging.warning(f"Не удалось найти кнопку для просмотра цен после прокрутки: {e}")
+                return
 
         logging.info("Ожидаем загрузки предложений по товару...")
         WebDriverWait(driver, 30).until(
