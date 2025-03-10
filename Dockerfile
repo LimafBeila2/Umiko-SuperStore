@@ -42,9 +42,6 @@ RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 # Копируем все файлы приложения в контейнер
 COPY . /app
 
-# Копируем ChromeDriver из локальной папки в контейнер
-COPY /chromedriver-win32/chromedriver.exe /usr/bin/chromedriver
-
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
 

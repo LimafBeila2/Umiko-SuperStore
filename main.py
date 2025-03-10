@@ -13,8 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
-from selenium_stealth import stealth
-import undetected_chromedriver as uc
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Заголовки запроса
@@ -24,13 +23,15 @@ headers = {
 
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-# COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
-CHROMEDRIVER_PATH = "/chromedriver-win32/chromedriver.exe"
+COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
-    # Указываем путь к локальному ChromeDriver
+    # Автоматическая установка правильной версии ChromeDriver
+    chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
+
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -38,47 +39,32 @@ def create_driver():
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
 
-    # Создаем драйвер с указанием пути к локальному ChromeDriver
-    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=options)
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
-
-    # Маскируем Selenium с помощью selenium-stealth
-    stealth(driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
 
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-    # # Загружаем куки, если они есть
-    # load_cookies(driver)
+    # Загружаем куки, если они есть
+    load_cookies(driver)
 
-    # return driver  # Возвращаем драйвер с профилем и заголовками
+    return driver  # Возвращаем драйвер с профилем и заголовками
 
-# def load_cookies(driver):
-#     if os.path.exists(COOKIES_PATH):
-#         logging.info("Загружаем куки...")
-#         with open(COOKIES_PATH, "r", encoding="utf-8") as f:
-#             cookies = json.load(f)
-#             for cookie in cookies:
-#                 driver.add_cookie(cookie)
-#         logging.info("Куки загружены.")
+def load_cookies(driver):
+    if os.path.exists(COOKIES_PATH):
+        logging.info("Загружаем куки...")
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Куки загружены.")
 
-# def save_cookies(driver):
-#     cookies = driver.get_cookies()
-#     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-#         json.dump(cookies, f)
-#     logging.info("Куки сохранены.")
-# def save_cookies(driver):
-#     cookies = driver.get_cookies()
-#     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-#         json.dump(cookies, f)
-#     logging.info("Куки сохранены.")
+def save_cookies(driver):
+    cookies = driver.get_cookies()
+    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Куки сохранены.")
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -114,7 +100,7 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
-        # save_cookies(driver)
+        save_cookies(driver)
         sleep(2)
         driver.get("https://business.umico.az/account/products/my")
     except Exception as e:
