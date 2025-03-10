@@ -13,100 +13,58 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
-import pickle
+from selenium_stealth import stealth
+import undetected_chromedriver as uc
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-
-
-
-# Заголовки запроса
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
-}
-
-# Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/app/tmp/chrome_profile"
-
-COOKIES_PATH = "/app/tmp/cookies/cookies.pkl"
-
-
-def check_and_create_directory(path):
-    """Проверяем, существует ли директория, и если нет - создаем её."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-        logging.info(f"Директория {path} была создана.")
-    else:
-        logging.info(f"Директория {path} существует.")
-
-def check_directory_access(path):
-    """Проверяем доступность директории для записи."""
-    if os.access(path, os.W_OK):
-        logging.info(f"Доступ к директории {path} для записи разрешен.")
-    else:
-        logging.warning(f"Нет доступа к директории {path} для записи.")
-
-def load_cookies(driver, file_path=COOKIES_PATH):
-    """Загружаем cookies из файла."""
-    try:
-        if os.path.exists(file_path):
-            cookies = pickle.load(open(file_path, "rb"))
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-            logging.info("Cookies успешно загружены.")
-        else:
-            logging.warning(f"Файл cookies не найден: {file_path}")
-    except Exception as e:
-        logging.warning(f"Ошибка при загрузке cookies: {e}")
-
-def save_cookies(driver, file_path=COOKIES_PATH):
-    """Сохраняем cookies в файл."""
-    try:
-        cookies = driver.get_cookies()
-        with open(file_path, "wb") as file:
-            pickle.dump(cookies, file)
-        logging.info("Cookies успешно сохранены.")
-    except Exception as e:
-        logging.warning(f"Ошибка при сохранении cookies: {e}")
-
-
-
-# Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-
+COOKIES_PATH = "/tmp/cookies.json"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
-
-    # Автоматическая установка правильной версии ChromeDriver
-    chromedriver_autoinstaller.install()
-    logging.info("ChromeDriver успешно установлен.")
-    check_directory_access(CHROME_PROFILE_PATH)
-    check_directory_access(os.path.dirname(COOKIES_PATH))
-
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-blink-features=AutonationControlled")
     options.add_argument("--window-size=1920x1080")
-    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
-    # Выбираем случайный прокси (если используется)
-    # proxy = random.choice(proxies_list)
-    # options.add_argument(f"--proxy-server={proxy}")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")
+    options.add_argument("--headless")
 
-    # Создаем драйвер
-    driver = webdriver.Chrome(options=options)
+    driver = uc.Chrome(options=options)
     logging.info("WebDriver создан.")
-    return driver  # Возвращаем драйвер с профилем и заголовками
+    
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
 
+    load_cookies(driver)
+    return driver
 
-# Функция для авторизации
-# Функция для авторизации в Umico
+def load_cookies(driver):
+    if os.path.exists(COOKIES_PATH):
+        logging.info("Загружаем куки...")
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Куки загружены.")
+
+def save_cookies(driver):
+    cookies = driver.get_cookies()
+    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Куки сохранены.")
+
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
     load_dotenv()  # Загружаем переменные окружения из файла .env
+
     username = os.getenv("UMICO_USERNAME")
     password = os.getenv("UMICO_PASSWORD")
 
@@ -115,7 +73,6 @@ def login_to_umico(driver):
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
     logging.info("Открываем страницу авторизации Umico...")
-    # Открываем страницу авторизации
     driver.get("https://business.umico.az/sign-in")
 
     # Ожидаем, пока появится поле для ввода логина
@@ -130,18 +87,23 @@ def login_to_umico(driver):
     password_input.send_keys(password)  # Вводим пароль
     password_input.send_keys(Keys.RETURN)  # Нажимаем Enter
     logging.info("Пароль введен и форма отправлена.")
-
+    
     try:
         # Ожидаем загрузки страницы заказов, чтобы убедиться, что вход был успешным
         WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
         sleep(3)  # Пауза для полной загрузки страницы
         logging.info("Успешный вход в Umico Business!")
-    except:
+
+        # Сохраняем куки после успешного входа
+        save_cookies(driver)
+        sleep(2)
+        driver.get("https://business.umico.az/account/products/my")
+    except Exception as e:
         logging.error("Ошибка входа!")
+        logging.exception(e)
         driver.quit()  # Закрываем драйвер
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
-# Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
         # Здесь добавляется возможность выбора города "Баку"
@@ -151,11 +113,10 @@ def close_ad(driver):
         )
         baku_option.click()
         logging.info("Город Баку выбран.")
-    except:
+    except Exception as e:
         logging.info("Окно выбора города не появилось.")
+        logging.exception(e)
 
-# Функция обработки одного товара
-# Функция обработки одного товара
 def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
@@ -165,7 +126,7 @@ def process_product(product, driver):
         driver.get(product_url)
         sleep(2)
         close_ad(driver)
-        
+
         try:
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
             button = WebDriverWait(driver, 30).until(
@@ -178,57 +139,55 @@ def process_product(product, driver):
         except Exception as e:
             logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
             return
-        
+
         logging.info("Ожидаем загрузки предложений по товару...")
         WebDriverWait(driver, 30).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
         )
-        
+
         product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
         if not product_offers:
             logging.warning("Нет предложений по этому товару.")
             return
-        
+
         lowest_price = float('inf')
         lowest_price_merchant = ""
         super_store_price = None
-        
+
         logging.info(f"Обрабатываем {len(product_offers)} предложений для этого товара.")
         for offer in product_offers:
             try:
                 merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
                 logging.info(f"Предложение от продавца: {merchant}")
-                
+
                 price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
                 price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
-                
+
                 # Выбираем минимальную цену, если оба атрибута найдены
                 price_text = None
                 if price_text_old and price_text_new:
                     price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
-
                 elif price_text_old:
                     price_text = price_text_old
                 elif price_text_new:
                     price_text = price_text_new
-                
+
                 # Если цена найдена, очищаем и конвертируем её в число
                 if price_text:
                     price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
                     if not price_text_cleaned:
                         continue
-                    
-                price = float(price_text_cleaned)
-                logging.info(f"Найдена цена: {price}₼")
-                if merchant == "Super Store":
-                    super_store_price = price
-                if price < lowest_price:
-                    lowest_price = price
-                    lowest_price_merchant = merchant
+                    price = float(price_text_cleaned)
+                    logging.info(f"Найдена цена: {price}₼")
+                    if merchant == "Super Store":
+                        super_store_price = price
+                    if price < lowest_price:
+                        lowest_price = price
+                        lowest_price_merchant = merchant
             except Exception as e:
                 logging.warning(f"Ошибка при обработке предложения: {e}")
                 continue
-        
+
         logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
         if super_store_price is not None:
             logging.info(f"Цена от Super Store: {super_store_price}")
@@ -237,11 +196,11 @@ def process_product(product, driver):
         if lowest_price <= 80.1:
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
+
         sleep(2)
-        
+
         # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
-
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
         sleep(2)
@@ -252,7 +211,6 @@ def process_product(product, driver):
             logging.info("Мы на правильной странице.")
         except Exception as e:
             logging.error(f"Не на правильной странице. Текущий URL: {driver.current_url}")
-            
             # Если мы не на нужной странице, повторно авторизуемся
             login_to_umico(driver)  # Функция авторизации, если не на нужной странице
             driver.get(edit_url)  # Переходим снова на страницу редактирования
@@ -267,22 +225,19 @@ def process_product(product, driver):
             save_button.click()
             logging.info("Кнопка 'Готово' была нажата.")
             sleep(2)
-            
         except Exception as e:
             current_url = driver.current_url
             logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
             logging.error(f"Текущий URL: {current_url}")
-   
+
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
 
-# Функция для загрузки товаров из JSON
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
     logging.info("Создаем драйвер для обработки товаров...")
     driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
@@ -294,12 +249,9 @@ def process_products_from_json(json_file):
     finally:
         driver.quit()  # Закрываем драйвер после обработки всех товаров
 
-# Бесконечный цикл
 if __name__ == "__main__":
     while True:
         logging.info("Запускаем процесс обработки товаров...")
         process_products_from_json("product.json")
         logging.info("Работа завершена, повторная обработка через 60 секунд...")
         sleep(60)  # Пауза перед повторным запуском
-
-
