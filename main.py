@@ -32,6 +32,7 @@ def create_driver():
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
 
+
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
