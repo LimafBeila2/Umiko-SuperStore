@@ -24,26 +24,31 @@ COOKIES_PATH = "/tmp/cookies.json"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
-    options = Options()
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920x1080")
-    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")
-    options.add_argument("--headless")
+    try:
+        options = Options()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920x1080")
+        options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")
+        options.add_argument("--headless")  # Можно временно убрать для отладки
 
-    driver = webdriver.Chrome(options=options)
-    logging.info("WebDriver создан.")
+        driver = webdriver.Chrome(options=options)
+        logging.info("WebDriver создан.")
+        
+        stealth(driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+        )
+
+        load_cookies(driver)
+        logging.info("WebDriver готов.")
+    except Exception as e:
+        logging.error(f"Ошибка при создании WebDriver: {e}")
     
-    stealth(driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
-
-    load_cookies(driver)
     return driver
 
 def load_cookies(driver):
