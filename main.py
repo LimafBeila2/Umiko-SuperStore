@@ -141,38 +141,18 @@ def process_product(product, driver):
         sleep(2)
         close_ad(driver)
 
-        # Логируем текущий URL
-        logging.info(f"Текущий URL: {driver.current_url}")
-
         try:
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
-            # Проверяем кнопку на азербайджанском языке
             button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH,
-                    "//div[@class='Other-Sellers']/a[contains(., 'Bütün satıcıların qiymətlərinə baxmaq')]"))
+                    "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                ))
             )
-            logging.info("Кнопка для просмотра цен всех продавцов (азербайджанский) была найдена и нажата.")
-            button.click()  # Нажимаем кнопку
+            button.click()
+            logging.info("Кнопка для просмотра цен всех продавцов была нажата.")
         except Exception as e:
-            logging.warning(f"Не удалось найти кнопку для просмотра цен (азербайджанский): {e}")
-            logging.info(f"Не удалось найти кнопку на странице. Текущий URL: {driver.current_url}")  # Добавляем текущий URL
-
-            # Прокрутка страницы вниз, чтобы кнопка стала видимой
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            sleep(2)
-            try:
-                # Проверяем кнопку на русском языке, если не нашли на азербайджанском
-                button = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.XPATH,
-                        "//div[@class='Other-Sellers']/a[contains(., 'Посмотреть цены всех продавцов')]"))
-                )
-                button.click()
-                logging.info("Кнопка для просмотра цен всех продавцов (русский) была найдена и нажата после прокрутки.")
-            except Exception as e:
-                logging.warning(f"Не удалось найти кнопку для просмотра цен после прокрутки: {e}")
-                logging.info(f"Не удалось найти кнопку после прокрутки. Текущий URL: {driver.current_url}")  # Логируем текущий URL
-
-                return  # Выход из функции, если кнопка не найдена
+            logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
+            return
 
         logging.info("Ожидаем загрузки предложений по товару...")
         WebDriverWait(driver, 30).until(
@@ -266,6 +246,22 @@ def process_product(product, driver):
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+
+def load_json(json_file):
+    logging.info(f"Загружаем товары из файла {json_file}...")
+    with open(json_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def process_products_from_json(json_file):
+    logging.info("Создаем драйвер для обработки товаров...")
+    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
+    try:
+        products = load_json(json_file)
+        for product in products:
+            logging.info(f"Обрабатываем товар {product['product_url']}")
+            process_product(product, driver)
+    finally:
+        driver.quit()  # Закрываем драйвер после обработки всех товаров
 
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
