@@ -246,23 +246,6 @@ def process_product(product, driver):
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
-
-def load_json(json_file):
-    logging.info(f"Загружаем товары из файла {json_file}...")
-    with open(json_file, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def process_products_from_json(json_file):
-    logging.info("Создаем драйвер для обработки товаров...")
-    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
-    try:
-        products = load_json(json_file)
-        for product in products:
-            logging.info(f"Обрабатываем товар {product['product_url']}")
-            process_product(product, driver)
-    finally:
-        driver.quit()  # Закрываем драйвер после обработки всех товаров
-
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
     with open(json_file, "r", encoding="utf-8") as f:
