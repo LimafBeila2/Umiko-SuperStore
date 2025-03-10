@@ -24,32 +24,39 @@ COOKIES_PATH = "/tmp/cookies.json"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
-    try:
-        options = Options()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--window-size=1920x1080")
-        options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")
-        options.add_argument("--headless")  # Можно временно убрать для отладки
 
-        driver = webdriver.Chrome(options=options)
-        logging.info("WebDriver создан.")
-        
-        stealth(driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
+    # Автоматическая установка правильной версии ChromeDriver
+    chromedriver_autoinstaller.install()
+    logging.info("ChromeDriver успешно установлен.")
 
-        load_cookies(driver)
-        logging.info("WebDriver готов.")
-    except Exception as e:
-        logging.error(f"Ошибка при создании WebDriver: {e}")
-    
-    return driver
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
+
+    # Создаем драйвер
+    driver = webdriver.Chrome(options=options)
+    logging.info("WebDriver создан.")
+
+    # Маскируем Selenium с помощью selenium-stealth
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
+
+    # Добавляем заголовки через CDP
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+
+    # Загружаем куки, если они есть
+    load_cookies(driver)
+
+    return driver  # Возвращаем драйвер с профилем и заголовками
 
 def load_cookies(driver):
     if os.path.exists(COOKIES_PATH):
