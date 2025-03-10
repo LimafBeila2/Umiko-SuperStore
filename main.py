@@ -92,7 +92,7 @@ def login_to_umico(driver):
     password_input.send_keys(password)  # Вводим пароль
     password_input.send_keys(Keys.RETURN)  # Нажимаем Enter
     logging.info("Пароль введен и форма отправлена.")
-    
+
     try:
         # Ожидаем загрузки страницы заказов, чтобы убедиться, что вход был успешным
         WebDriverWait(driver, 30).until(EC.url_contains("/account/orders"))
@@ -101,8 +101,6 @@ def login_to_umico(driver):
 
         # Сохраняем куки после успешного входа
         save_cookies(driver)
-        sleep(2)
-        driver.get("https://business.umico.az/account/products/my")
     except Exception as e:
         logging.error("Ошибка входа!")
         logging.exception(e)
@@ -126,6 +124,7 @@ def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
         sleep(10)
+
         product_url, edit_url = product["product_url"], product["edit_url"]
         logging.info(f"Открываем страницу товара: {product_url}")
         driver.get(product_url)
