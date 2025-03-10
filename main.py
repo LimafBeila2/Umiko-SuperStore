@@ -161,7 +161,7 @@ def process_product(product, driver):
             try:
                 button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH,
-                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')] or //div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"
                     ))
                 )
                 button.click()
