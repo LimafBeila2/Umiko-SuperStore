@@ -39,11 +39,11 @@ RUN /opt/venv/bin/pip install -r /app/requirements.txt
 # Устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
-# Копируем ChromeDriver в контейнер (согласно реальному пути)
-COPY ./selenium/chromedriver-win32/chromedriver.exe /usr/bin/chromedriver
-
 # Копируем все файлы приложения в контейнер
 COPY . /app
+
+# Копируем ChromeDriver из локальной папки в контейнер
+COPY ./selenium/chromedriver-win32/chromedriver.exe /usr/bin/chromedriver
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
@@ -61,6 +61,3 @@ RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
 
 # Порты, которые могут понадобиться для связи с контейнером (если нужны)
 EXPOSE 8080
-
-# Указываем команду по умолчанию для контейнера (если необходимо)
-CMD ["python", "your_script.py"]
