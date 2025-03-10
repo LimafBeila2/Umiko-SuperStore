@@ -24,7 +24,7 @@ headers = {
 
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
+# COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 CHROMEDRIVER_PATH = "/chromedriver-win32/chromedriver.exe"
 
 def create_driver():
@@ -60,25 +60,25 @@ def create_driver():
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
-def load_cookies(driver):
-    if os.path.exists(COOKIES_PATH):
-        logging.info("Загружаем куки...")
-        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
-            cookies = json.load(f)
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-        logging.info("Куки загружены.")
+# def load_cookies(driver):
+#     if os.path.exists(COOKIES_PATH):
+#         logging.info("Загружаем куки...")
+#         with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+#             cookies = json.load(f)
+#             for cookie in cookies:
+#                 driver.add_cookie(cookie)
+#         logging.info("Куки загружены.")
 
-def save_cookies(driver):
-    cookies = driver.get_cookies()
-    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-        json.dump(cookies, f)
-    logging.info("Куки сохранены.")
-def save_cookies(driver):
-    cookies = driver.get_cookies()
-    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-        json.dump(cookies, f)
-    logging.info("Куки сохранены.")
+# def save_cookies(driver):
+#     cookies = driver.get_cookies()
+#     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+#         json.dump(cookies, f)
+#     logging.info("Куки сохранены.")
+# def save_cookies(driver):
+#     cookies = driver.get_cookies()
+#     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+#         json.dump(cookies, f)
+#     logging.info("Куки сохранены.")
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
