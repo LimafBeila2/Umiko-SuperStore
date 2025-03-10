@@ -15,12 +15,16 @@ import random
 import chromedriver_autoinstaller
 from selenium_stealth import stealth
 import undetected_chromedriver as uc
-
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Заголовки запроса
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+}
+
+# Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-COOKIES_PATH = "/tmp/cookies.json"
+COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
