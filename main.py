@@ -13,6 +13,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
+from selenium_stealth import stealth
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -25,13 +27,13 @@ headers = {
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
+# После создания драйвера, примените stealth
 def create_driver():
     logging.info("Создаем новый WebDriver...")
 
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
-
 
     options = Options()
     options.add_argument("--no-sandbox")
@@ -44,6 +46,14 @@ def create_driver():
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
 
+    # Применяем stealth, чтобы скрыть использование Selenium
+    stealth(driver,
+        user_agent=headers["User-Agent"],
+        languages=["en-US", "en"],
+        timezone_id="America/New_York",  # Укажите подходящий часовой пояс
+        platform="Win32"
+    )
+
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
@@ -51,7 +61,6 @@ def create_driver():
     load_cookies(driver)
 
     return driver  # Возвращаем драйвер с профилем и заголовками
-
 def load_cookies(driver):
     if os.path.exists(COOKIES_PATH):
         logging.info("Загружаем куки...")
