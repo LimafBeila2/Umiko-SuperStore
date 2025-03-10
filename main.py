@@ -49,7 +49,7 @@ def create_driver():
     # Применяем stealth, чтобы скрыть использование Selenium
     stealth(driver,
         user_agent=headers["User-Agent"],
-        languages=["az", "ru", "en"],
+        languages=["az", "ru"],
         timezone_id="Asia/Baku",
         platform="Win32"
     )
