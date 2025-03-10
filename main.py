@@ -117,8 +117,7 @@ def login_to_umico(driver):
     logging.info("Открываем страницу авторизации Umico...")
     # Открываем страницу авторизации
     driver.get("https://business.umico.az/sign-in")
-    
-    
+
     # Ожидаем, пока появится поле для ввода логина
     login_input = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
