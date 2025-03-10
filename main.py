@@ -49,11 +49,10 @@ def create_driver():
     # Применяем stealth, чтобы скрыть использование Selenium
     stealth(driver,
         user_agent=headers["User-Agent"],
-        languages=["az", "ru", "en"],  # Азербайджанский, русский, английский
-        timezone_id="Asia/Baku",  # Часовой пояс Азербайджан
+        languages=["az", "ru", "en"],
+        timezone_id="Asia/Baku",
         platform="Win32"
     )
-
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
