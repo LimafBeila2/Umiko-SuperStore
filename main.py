@@ -25,7 +25,7 @@ headers = {
 # Папка для хранения профиля в контейнере Railway
 CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
-CHROMEDRIVER_PATH = "C:/Users/Famka/.vscode/selenium/chromedriver-win32/chromedriver.exe"
+CHROMEDRIVER_PATH = "chromedriver-win32\chromedriver.exe"
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
