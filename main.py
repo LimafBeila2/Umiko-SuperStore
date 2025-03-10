@@ -20,8 +20,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Заголовки запроса
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
 }
+
 
 # Папка для хранения профиля в контейнере Railway
 # CHROME_PROFILE_PATH = "/tmp/chrome_profile"
@@ -36,7 +37,7 @@ def create_driver():
     logging.info("ChromeDriver успешно установлен.")
 
     options = Options()
-    # options.add_argument("--no-sandbox")
+    options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     # options.add_argument("--window-size=1920x1080")
     # options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
