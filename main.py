@@ -253,7 +253,7 @@ def process_products_from_json(json_file):
     finally:
         driver.quit()  # Закрываем драйвер после обработки всех товаров
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     while True:
         logging.info("Запускаем процесс обработки товаров...")
         process_products_from_json("product.json")
