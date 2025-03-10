@@ -36,7 +36,7 @@ RUN /opt/venv/bin/pip install --upgrade pip
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
-# Устанавливаем chromedriver-autoinstaller
+# Явно устанавливаем chromedriver-autoinstaller
 RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
 # Копируем все файлы приложения в контейнер
@@ -55,6 +55,3 @@ WORKDIR /app
 # Создаем папки для профиля Chrome и cookies, даем права на запись
 RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
     chmod -R 777 /app/tmp/chrome_profile /app/tmp/cookies
-
-# Порты, которые могут понадобиться для связи с контейнером (если нужны)
-EXPOSE 8080
