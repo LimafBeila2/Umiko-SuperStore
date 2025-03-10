@@ -144,11 +144,9 @@ def process_product(product, driver):
         try:
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
             button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH,
-                    "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-                ))
-            )
-            button.click()
+                EC.element_to_be_clickable((By.XPATH,"//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                                            ))
+                                            )
             logging.info("Кнопка для просмотра цен всех продавцов была нажата.")
         except Exception as e:
             logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
