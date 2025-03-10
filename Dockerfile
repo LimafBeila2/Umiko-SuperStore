@@ -37,8 +37,8 @@ RUN /opt/venv/bin/pip install --upgrade pip
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
-# Явно устанавливаем chromedriver-autoinstaller
-RUN /opt/venv/bin/pip install chromedriver-autoinstaller
+# Явно устанавливаем chromedriver-autoinstaller и selenium-stealth
+RUN /opt/venv/bin/pip install chromedriver-autoinstaller selenium-stealth==1.0.6
 
 # Копируем все файлы приложения в контейнер
 COPY . /selenium
