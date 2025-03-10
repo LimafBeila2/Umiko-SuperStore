@@ -37,16 +37,11 @@ def create_driver():
     logging.info("ChromeDriver успешно установлен.")
 
     options = Options()
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--window-size=1920x1080")
-    # options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-    options.add_argument("--disable-blink-features=AutomationControler")
-    # options.add_argument('--disable-service-worker')
-    # options.add_argument('--disable-application-cache')
-    # options.add_argument('--disk-cache-size=1')
-    # Создаем драйвер
+    options.add_argument("--disable-blink-features=AutomationControlled")  # Убирает детектирование Selenium
+    options.add_argument("--no-sandbox")  # Иногда помогает в Linux
+    options.add_argument("--disable-dev-shm-usage")  # Избегает проблем с памятью
+    options.add_argument("--headless")  # Фоновый режим (без открытия окна браузера)
+
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
 
