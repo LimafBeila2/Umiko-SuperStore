@@ -146,35 +146,32 @@ def process_product(product, driver):
 
         try:
             logging.info("Ищем кнопку для просмотра цен всех продавцов...")
+            # Проверяем кнопку на азербайджанском языке
             button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH,
-                    "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
-            ) or WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH,
-                    "//div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"))
+                    "//div[@class='Other-Sellers']/a[contains(., 'Bütün satıcıların qiymətlərinə baxmaq')]"))
             )
-            logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата.")
+            logging.info("Кнопка для просмотра цен всех продавцов (азербайджанский) была найдена и нажата.")
             button.click()  # Нажимаем кнопку
         except Exception as e:
-            logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
+            logging.warning(f"Не удалось найти кнопку для просмотра цен (азербайджанский): {e}")
             logging.info(f"Не удалось найти кнопку на странице. Текущий URL: {driver.current_url}")  # Добавляем текущий URL
 
             # Прокрутка страницы вниз, чтобы кнопка стала видимой
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             sleep(2)
             try:
+                # Проверяем кнопку на русском языке, если не нашли на азербайджанском
                 button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH,
-                        "//div[@class='Other-Sellers']/a[contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"))
-                ) or WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.XPATH,
-                        "//div[@class='Other-Sellers']/a[contains(text(), 'Посмотреть цены всех продавцов')]"))
+                        "//div[@class='Other-Sellers']/a[contains(., 'Посмотреть цены всех продавцов')]"))
                 )
                 button.click()
-                logging.info("Кнопка для просмотра цен всех продавцов была найдена и нажата после прокрутки.")
+                logging.info("Кнопка для просмотра цен всех продавцов (русский) была найдена и нажата после прокрутки.")
             except Exception as e:
                 logging.warning(f"Не удалось найти кнопку для просмотра цен после прокрутки: {e}")
                 logging.info(f"Не удалось найти кнопку после прокрутки. Текущий URL: {driver.current_url}")  # Логируем текущий URL
+
                 return  # Выход из функции, если кнопка не найдена
 
         logging.info("Ожидаем загрузки предложений по товару...")
