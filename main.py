@@ -55,10 +55,10 @@ def create_driver():
     # Добавляем заголовки через CDP
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
-    # Загружаем куки, если они есть
-    load_cookies(driver)
+    # # Загружаем куки, если они есть
+    # load_cookies(driver)
 
-    return driver  # Возвращаем драйвер с профилем и заголовками
+    # return driver  # Возвращаем драйвер с профилем и заголовками
 
 # def load_cookies(driver):
 #     if os.path.exists(COOKIES_PATH):
@@ -114,7 +114,7 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
-        save_cookies(driver)
+        # save_cookies(driver)
         sleep(2)
         driver.get("https://business.umico.az/account/products/my")
     except Exception as e:
