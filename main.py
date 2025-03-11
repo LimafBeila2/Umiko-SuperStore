@@ -27,27 +27,33 @@ CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
-    logging.info("Создаем новый WebDriver...")
+    logging.info("🚀 Создаем новый WebDriver...")
 
-    # Автоматическая установка правильной версии ChromeDriver
+    # Автоматическая установка ChromeDriver
     chromedriver_autoinstaller.install()
-    logging.info("ChromeDriver успешно установлен.")
+    logging.info("✅ ChromeDriver успешно установлен.")
 
     options = Options()
-
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
-    options.add_argument("--disable-blink-features=AutomationControler")
+    options.add_argument("--headless")  # Без интерфейса (если нужно)
+    options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument('--disable-service-worker')
     options.add_argument('--disable-application-cache')
     options.add_argument('--disk-cache-size=1')
-    # Создаем драйвер
-    driver = webdriver.Chrome(options=options)
-    logging.info("WebDriver создан.")
 
+    driver = webdriver.Chrome(options=options)
+    logging.info("✅ WebDriver создан.")
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+    # Открываем страницу логина
+    driver.get("https://business.umico.az/account/products/my/2576516")
+
+    # Загружаем куки перед тем, как страница потребует авторизацию
+    load_cookies(driver)
+
+    return driver
     # # Применяем stealth, чтобы скрыть использование Selenium
     # stealth(driver,
     #     user_agent=headers["User-Agent"],
@@ -56,38 +62,30 @@ def create_driver():
     #     platform="Win32"
 
     # Добавляем заголовки через CDP
-    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
 
 
 
-    return driver  # Возвращаем драйвер с профилем и заголовками
-
-def load_cookies(driver, cookies_path):
-    if os.path.exists(cookies_path):
-        logging.info("Загружаем куки...")
-
-        with open(cookies_path, "r", encoding="utf-8") as f:
-            cookies = json.load(f)
-            logging.info(f"Загружено {len(cookies)} куки.")
-            for cookie in cookies:
-                try:
-                    driver.add_cookie(cookie)
-                except Exception as e:
-                    logging.warning(f"Ошибка при добавлении куки: {e}")
-        logging.info("Куки загружены.")
-
-        sleep(3)  # Пауза для обновления сессии
-
-    else:
-        logging.warning(f"Файл с куки не найден по пути {cookies_path}")
 
 def save_cookies(driver):
+    """Сохранение куков в файл"""
+    os.makedirs(os.path.dirname(COOKIES_PATH), exist_ok=True)
     cookies = driver.get_cookies()
     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-        json.dump(cookies, f)
-    logging.info(f"Куки сохранены. Всего куки: {len(cookies)}")\
-    
+        json.dump(cookies, f, indent=4)
+    logging.info(f"✅ Куки сохранены: {len(cookies)} шт.")
+
+def load_cookies(driver):
+    """Загрузка куков из файла"""
+    if os.path.exists(COOKIES_PATH):
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+        logging.info("✅ Куки загружены, обновляем страницу...")
+        driver.refresh()
+    else:
+        logging.warning("❌ Файл с куками не найден, потребуется вход.")
 
 
 def check_session(driver):
