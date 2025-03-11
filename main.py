@@ -15,7 +15,6 @@ import random
 import chromedriver_autoinstaller
 from selenium_stealth import stealth
 
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Заголовки запроса
@@ -36,7 +35,6 @@ def create_driver():
 
     options = Options()
 
-    options.add_argument("--user-data-dir")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
@@ -65,17 +63,24 @@ def create_driver():
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
-def load_cookies(driver):
-    if os.path.exists(COOKIES_PATH):
+def load_cookies(driver, cookies_path):
+    if os.path.exists(cookies_path):
         logging.info("Загружаем куки...")
-        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+
+        with open(cookies_path, "r", encoding="utf-8") as f:
             cookies = json.load(f)
             logging.info(f"Загружено {len(cookies)} куки.")
             for cookie in cookies:
-                driver.add_cookie(cookie)
+                try:
+                    driver.add_cookie(cookie)
+                except Exception as e:
+                    logging.warning(f"Ошибка при добавлении куки: {e}")
         logging.info("Куки загружены.")
+
+        sleep(3)  # Пауза для обновления сессии
+
     else:
-        logging.warning(f"Файл с куки не найден по пути {COOKIES_PATH}")
+        logging.warning(f"Файл с куки не найден по пути {cookies_path}")
 
 def save_cookies(driver):
     cookies = driver.get_cookies()
@@ -149,6 +154,13 @@ def close_ad(driver):
     except Exception as e:
         logging.info("Окно выбора города не появилось.")
         logging.exception(e)
+
+def check_if_logged_in(driver):
+    current_url = driver.current_url
+    if "sign-in" in current_url:
+        logging.error(f"Не на правильной странице. Текущий URL: {current_url}")
+        return False
+    return True
 
 def process_product(product, driver):
     try:
