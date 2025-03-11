@@ -98,6 +98,19 @@ def check_session(driver):
         logging.exception(e)
         login_to_umico(driver)  # Повторная авторизация
 
+def refresh_cookies(driver):
+    """Перезагружает куки перед выполнением операций"""
+    driver.delete_all_cookies()
+    
+    if os.path.exists(COOKIES_PATH):
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+
+        logging.info("✅ Куки обновлены, пробуем снова...")
+        driver.refresh()
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -242,7 +255,7 @@ def process_product(product, driver):
             return
 
         sleep(2)
-
+        refresh_cookies(driver)
         # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
         driver.get(edit_url)
