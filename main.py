@@ -70,16 +70,18 @@ def load_cookies(driver):
         logging.info("Загружаем куки...")
         with open(COOKIES_PATH, "r", encoding="utf-8") as f:
             cookies = json.load(f)
+            logging.info(f"Загружено {len(cookies)} куки.")
             for cookie in cookies:
                 driver.add_cookie(cookie)
         logging.info("Куки загружены.")
+    else:
+        logging.warning(f"Файл с куки не найден по пути {COOKIES_PATH}")
 
 def save_cookies(driver):
     cookies = driver.get_cookies()
     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
         json.dump(cookies, f)
-    logging.info("Куки сохранены.")
-
+    logging.info(f"Куки сохранены. Всего куки: {len(cookies)}")
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
     load_dotenv()  # Загружаем переменные окружения из файла .env
