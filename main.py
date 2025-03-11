@@ -41,7 +41,7 @@ def create_driver():
     options.add_argument("--no-sandbox")  # Иногда помогает в Linux
     options.add_argument("--disable-dev-shm-usage")  # Избегает проблем с памятью
     options.add_argument("--headless")  # Фоновый режим (без открытия окна браузера)
-    options.add_argument("--user-data-dir")  # Фоновый режим (без открытия окна браузера)
+    options.add_argument("--user-data-dir")
 
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
