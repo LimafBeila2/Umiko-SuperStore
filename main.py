@@ -19,6 +19,7 @@ options.add_argument("--window-size=1920x1080")
 # Используем системный chromedriver
 service = Service("/usr/bin/chromedriver")  # Путь к chromedriver
 
+
 # Создаем веб-драйвер
 driver = webdriver.Chrome(service=service, options=options)
 
