@@ -48,7 +48,7 @@ def create_driver():
     logging.info("✅ WebDriver создан.")
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
     # Открываем страницу логина
-    driver.get("https://business.umico.az/account/products/my/2576516")
+
 
     # Загружаем куки перед тем, как страница потребует авторизацию
     load_cookies(driver)
@@ -86,7 +86,7 @@ def load_cookies(driver):
         driver.refresh()
     else:
         logging.warning("❌ Файл с куками не найден, потребуется вход.")
-
+        login_to_umico(driver)
 
 def check_session(driver):
     try:
