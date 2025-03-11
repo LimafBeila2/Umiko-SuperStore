@@ -74,7 +74,6 @@ def load_cookies(driver):
         driver.refresh()
     else:
         logging.warning("❌ Файл с куками не найден, потребуется вход.")
-        login_to_umico(driver)
 
 def check_session(driver):
     try:
@@ -84,7 +83,6 @@ def check_session(driver):
     except Exception as e:
         logging.warning("Сессия не активна, требуется повторный вход.")
         logging.exception(e)
-        login_to_umico(driver)  # Повторная авторизация
 
 def refresh_cookies(driver):
     """Перезагружает куки перед выполнением операций"""
