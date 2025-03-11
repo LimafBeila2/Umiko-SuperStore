@@ -81,7 +81,21 @@ def save_cookies(driver):
     cookies = driver.get_cookies()
     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
         json.dump(cookies, f)
-    logging.info(f"Куки сохранены. Всего куки: {len(cookies)}")
+    logging.info(f"Куки сохранены. Всего куки: {len(cookies)}")\
+    
+
+
+def check_session(driver):
+    try:
+        # Проверяем, что мы не на странице входа, а на странице с заказами
+        WebDriverWait(driver, 10).until(EC.url_contains("/account/orders"))
+        logging.info("Сессия активна.")
+    except Exception as e:
+        logging.warning("Сессия не активна, требуется повторный вход.")
+        logging.exception(e)
+        login_to_umico(driver)  # Повторная авторизация
+
+
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
     load_dotenv()  # Загружаем переменные окружения из файла .env
