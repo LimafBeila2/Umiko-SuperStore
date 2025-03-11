@@ -54,6 +54,18 @@ def create_driver():
     load_cookies(driver)
 
     return driver
+    # # Применяем stealth, чтобы скрыть использование Selenium
+    # stealth(driver,
+    #     user_agent=headers["User-Agent"],
+    #     languages=["az", "ru"],
+    #     timezone_id="Asia/Baku",
+    #     platform="Win32"
+
+    # Добавляем заголовки через CDP
+
+
+
+
 
 def save_cookies(driver):
     """Сохранение куков в файл"""
@@ -74,6 +86,7 @@ def load_cookies(driver):
         driver.refresh()
     else:
         logging.warning("❌ Файл с куками не найден, потребуется вход.")
+        login_to_umico(driver)
 
 def check_session(driver):
     try:
@@ -83,6 +96,7 @@ def check_session(driver):
     except Exception as e:
         logging.warning("Сессия не активна, требуется повторный вход.")
         logging.exception(e)
+        login_to_umico(driver)  # Повторная авторизация
 
 def refresh_cookies(driver):
     """Перезагружает куки перед выполнением операций"""
@@ -141,8 +155,6 @@ def login_to_umico(driver):
 
 def close_ad(driver):
     try:
-        login_to_umico(driver)
-
         # Здесь добавляется возможность выбора города "Баку"
         logging.info("Ожидаем выбора города...")
         baku_option = WebDriverWait(driver, 30).until(
@@ -244,6 +256,7 @@ def process_product(product, driver):
 
         sleep(2)
         refresh_cookies(driver)
+
         # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
         driver.get(edit_url)
