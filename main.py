@@ -46,26 +46,12 @@ def create_driver():
 
     driver = webdriver.Chrome(options=options)
     logging.info("✅ WebDriver создан.")
-    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
-    # Открываем страницу логина
 
-
-    # Загружаем куки перед тем, как страница потребует авторизацию
+    # Открываем сайт перед загрузкой куков
+    driver.get("https://business.umico.az/")
     load_cookies(driver)
-
+    
     return driver
-    # # Применяем stealth, чтобы скрыть использование Selenium
-    # stealth(driver,
-    #     user_agent=headers["User-Agent"],
-    #     languages=["az", "ru"],
-    #     timezone_id="Asia/Baku",
-    #     platform="Win32"
-
-    # Добавляем заголовки через CDP
-
-
-
-
 
 def save_cookies(driver):
     """Сохранение куков в файл"""
@@ -83,7 +69,8 @@ def load_cookies(driver):
         for cookie in cookies:
             driver.add_cookie(cookie)
         logging.info("✅ Куки загружены, обновляем страницу...")
-        driver.refresh()
+        driver.refresh()  # Обновляем страницу после добавления куков
+        sleep(3)  # Ждем немного для полной загрузки страницы
     else:
         logging.warning("❌ Файл с куками не найден, потребуется вход.")
         login_to_umico(driver)
@@ -111,6 +98,7 @@ def refresh_cookies(driver):
 
         logging.info("✅ Куки обновлены, пробуем снова...")
         driver.refresh()
+        sleep(3)  # Ждем немного для полной загрузки страницы
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -276,40 +264,10 @@ def process_product(product, driver):
             sleep(2)
 
         # Находим кнопку "Готово" и нажимаем ее
-        try:
-            save_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-            )
-            save_button.click()
-            logging.info("Кнопка 'Готово' была нажата.")
-            sleep(2)
-        except Exception as e:
-            current_url = driver.current_url
-            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
-            logging.error(f"Текущий URL: {current_url}")
-
+        ready_button = WebDriverWait(driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='Gözləmək' or text()='Hörmətlə']"))
+        )
+        ready_button.click()
+        logging.info("Изменение цены успешно.")
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
-
-def load_json(json_file):
-    logging.info(f"Загружаем товары из файла {json_file}...")
-    with open(json_file, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def process_products_from_json(json_file):
-    logging.info("Создаем драйвер для обработки товаров...")
-    driver = create_driver()  # Создаем драйвер один раз перед обработкой всех товаров
-    try:
-        products = load_json(json_file)
-        for product in products:
-            logging.info(f"Обрабатываем товар {product['product_url']}")
-            process_product(product, driver)
-    finally:
-        driver.quit()  # Закрываем драйвер после обработки всех товаров
-
-if __name__ == "__main__":
-    while True:
-        logging.info("Запускаем процесс обработки товаров...")
-        process_products_from_json("product.json")
-        logging.info("Работа завершена, повторная обработка через 60 секунд...")
-        sleep(60)  # Пауза перед повторным запуском
+        logging.error(f"Ошибка при обработке товара: {e}")
