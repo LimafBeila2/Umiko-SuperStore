@@ -19,7 +19,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Заголовки запроса
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8,ro;q=0.7",
+    "Content-Length": "0",
+    "Cookie": "ar_debug=1",
+    "Origin": "https://business.umico.az",
+    "Referer": "https://business.umico.az/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Storage-Access": "active",
+    "Content-Type": "text/plain"
 }
 
 # Папка для хранения профиля в контейнере Railway
