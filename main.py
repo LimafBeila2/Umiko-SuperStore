@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 import logging
@@ -6,8 +7,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-
+from time import sleep
 # Настройки для Chrome
 options = Options()
 options.binary_location = "/usr/bin/chromium"  # Путь к бинарному файлу Chromium
@@ -28,29 +30,36 @@ def load_products():
         return json.load(file)
 
 # Функция входа в Umico Business
+
+
+# Функция входа в Umico Business
 def login_to_umico(driver):
-    driver.get("https://business.umico.az/login")  # URL входа
+    login_to_umico()
+    username = os.getenv("UMICO_USERNAME")
+    password = os.getenv("UMICO_PASSWORD")
 
-    # Ввод логина
-    email_input = WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.NAME, "email"))
+    if not username or not password:
+        raise ValueError("Ошибка: логин или пароль не найдены в .env")
+
+    driver.get("https://business.umico.az/sign-in")
+    login_input = WebDriverWait(driver, 60).until(
+        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
-    email_input.send_keys("ТВОЙ_ЛОГИН")
-
-    # Ввод пароля
-    password_input = WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.NAME, "password"))
-    )
-    password_input.send_keys("ТВОЙ_ПАРОЛЬ")
-
-    # Нажатие кнопки "Войти"
-    login_button = WebDriverWait(driver, 20).until(
-        EC.element_to_be_clickable((By.XPATH, "//button[text()='Войти']"))
-    )
-    login_button.click()
-
-    print("Успешный вход в Umico Business")
-    asyncio.sleep(5)  # Даем время на загрузку
+    login_input.send_keys(username)
+    
+    password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
+    password_input.send_keys(password)
+    password_input.send_keys(Keys.RETURN)
+    
+    try:
+        WebDriverWait(driver, 60).until(EC.url_contains("/account/orders"))
+        sleep(3)
+        logging.info("Успешный вход в Umico Business!")
+    except:
+        logging.error("Ошибка входа!")
+        driver.quit()
+        raise ValueError("Ошибка входа! Проверь логин и пароль.")
+    return driver.current_url == "https://business.umico.az/sign-in"
 
 # Функция обработки товара
 async def process_product(driver, product):
