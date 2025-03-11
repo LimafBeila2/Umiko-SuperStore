@@ -19,19 +19,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Заголовки запроса
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8,ro;q=0.7",
-    "Content-Length": "0",
-    "Cookie": "ar_debug=1",
-    "Origin": "https://business.umico.az",
-    "Referer": "https://business.umico.az/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "no-cors",
-    "Sec-Fetch-Site": "cross-site",
-    "Sec-Fetch-Storage-Access": "active",
-    "Content-Type": "text/plain"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
 
 # Папка для хранения профиля в контейнере Railway
@@ -66,18 +54,6 @@ def create_driver():
     load_cookies(driver)
 
     return driver
-    # # Применяем stealth, чтобы скрыть использование Selenium
-    # stealth(driver,
-    #     user_agent=headers["User-Agent"],
-    #     languages=["az", "ru"],
-    #     timezone_id="Asia/Baku",
-    #     platform="Win32"
-
-    # Добавляем заголовки через CDP
-
-
-
-
 
 def save_cookies(driver):
     """Сохранение куков в файл"""
@@ -126,6 +102,7 @@ def refresh_cookies(driver):
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
+    login_to_umico(driver)
     load_dotenv()  # Загружаем переменные окружения из файла .env
 
     username = os.getenv("UMICO_USERNAME")
