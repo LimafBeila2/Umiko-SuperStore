@@ -20,33 +20,33 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 # Заголовки запроса
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
 
-
 # Папка для хранения профиля в контейнере Railway
-# CHROME_PROFILE_PATH = "/tmp/chrome_profile"
-# COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
+CHROME_PROFILE_PATH = "/tmp/chrome_profile"
+COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
     logging.info("Создаем новый WebDriver...")
-
 
     # Автоматическая установка правильной версии ChromeDriver
     chromedriver_autoinstaller.install()
     logging.info("ChromeDriver успешно установлен.")
 
     options = Options()
-    options.add_argument("--disable-blink-features=AutomationControlled")  # Убирает детектирование Selenium
-    options.add_argument("--no-sandbox")  # Иногда помогает в Linux
-    options.add_argument("--disable-dev-shm-usage")  # Избегает проблем с памятью
-    options.add_argument("--headless")  # Фоновый режим (без открытия окна браузера)
-    options.add_argument("--user-data-dir")
-
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920x1080")
+    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
+    options.add_argument("--headless")  # Запуск без графического интерфейса (если нужно)
+    options.add_argument("--disable-blink-features=AutomationControler")
+    options.add_argument('--disable-service-worker')
+    options.add_argument('--disable-application-cache')
+    options.add_argument('--disk-cache-size=1')
+    # Создаем драйвер
     driver = webdriver.Chrome(options=options)
     logging.info("WebDriver создан.")
-
-
 
     # # Применяем stealth, чтобы скрыть использование Selenium
     # stealth(driver,
@@ -54,29 +54,29 @@ def create_driver():
     #     languages=["az", "ru"],
     #     timezone_id="Asia/Baku",
     #     platform="Win32"
-    # )
-    # # Добавляем заголовки через CDP
-    # driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+
+    # Добавляем заголовки через CDP
+    driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
 
 
 
 
     return driver  # Возвращаем драйвер с профилем и заголовками
 
-# def load_cookies(driver):
-#     if os.path.exists(COOKIES_PATH):
-#         logging.info("Загружаем куки...")
-#         with open(COOKIES_PATH, "r", encoding="utf-8") as f:
-#             cookies = json.load(f)
-#             for cookie in cookies:
-#                 driver.add_cookie(cookie)
-#         logging.info("Куки загружены.")
+def load_cookies(driver):
+    if os.path.exists(COOKIES_PATH):
+        logging.info("Загружаем куки...")
+        with open(COOKIES_PATH, "r", encoding="utf-8") as f:
+            cookies = json.load(f)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Куки загружены.")
 
-# def save_cookies(driver):
-#     cookies = driver.get_cookies()
-#     with open(COOKIES_PATH, "w", encoding="utf-8") as f:
-#         json.dump(cookies, f)
-#     logging.info("Куки сохранены.")
+def save_cookies(driver):
+    cookies = driver.get_cookies()
+    with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(cookies, f)
+    logging.info("Куки сохранены.")
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -112,7 +112,7 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
-        # save_cookies(driver)
+        save_cookies(driver)
     except Exception as e:
         logging.error("Ошибка входа!")
         logging.exception(e)
