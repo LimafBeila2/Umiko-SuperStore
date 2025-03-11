@@ -1,7 +1,7 @@
 # Используем официальный образ Python
 FROM python:3.12-slim
 
-# Устанавливаем зависимости для работы с Chromium и Selenium
+# Устанавливаем зависимости для Chrome и Selenium
 RUN apt-get update && apt-get install -y \
     bash \
     libxss1 \
@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf2.0-0 \
     libatk1.0-0 \
     libgtk-3-0 \
-    xvfb \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*  # Очистка кэша apt для уменьшения размера образа
 
@@ -37,11 +36,11 @@ RUN /opt/venv/bin/pip install --upgrade pip
 COPY requirements.txt /app/requirements.txt
 RUN /opt/venv/bin/pip install -r /app/requirements.txt
 
-# Явно устанавливаем chromedriver-autoinstaller и selenium-stealth
-RUN /opt/venv/bin/pip install chromedriver-autoinstaller selenium-stealth==1.0.6
+# Явно устанавливаем chromedriver-autoinstaller
+RUN /opt/venv/bin/pip install chromedriver-autoinstaller
 
 # Копируем все файлы приложения в контейнер
-COPY . /selenium
+COPY . /app
 
 # Устанавливаем переменные окружения для работы с виртуальным окружением
 ENV PATH="/opt/venv/bin:$PATH"
@@ -51,7 +50,8 @@ ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Указываем рабочую директорию
-WORKDIR /selenium
+WORKDIR /app
 
-# Запускаем скрипт
-CMD ["python", "main.py"]
+# Создаем папки для профиля Chrome и cookies, даем права на запись
+RUN mkdir -p /app/tmp/chrome_profile /app/tmp/cookies && \
+    chmod -R 777 /app/tmp/chrome_profile /app/tmp/cookies
