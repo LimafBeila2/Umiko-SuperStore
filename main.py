@@ -11,6 +11,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from time import sleep
 # Настройки для Chrome
+
+
 options = Options()
 options.binary_location = "/usr/bin/chromium"  # Путь к бинарному файлу Chromium
 options.add_argument("--headless")  # Без интерфейса
@@ -34,7 +36,7 @@ def load_products():
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
-    login_to_umico()
+    login_to_umico(driver)  # Передаем драйвер в функцию
     username = os.getenv("UMICO_USERNAME")
     password = os.getenv("UMICO_PASSWORD")
 
