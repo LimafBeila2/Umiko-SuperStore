@@ -100,7 +100,6 @@ def refresh_cookies(driver):
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
-    login_to_umico(driver)
     load_dotenv()  # Загружаем переменные окружения из файла .env
 
     username = os.getenv("UMICO_USERNAME")
@@ -142,6 +141,8 @@ def login_to_umico(driver):
 
 def close_ad(driver):
     try:
+        login_to_umico(driver)
+
         # Здесь добавляется возможность выбора города "Баку"
         logging.info("Ожидаем выбора города...")
         baku_option = WebDriverWait(driver, 30).until(
