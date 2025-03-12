@@ -126,6 +126,7 @@ def login_to_umico(driver):
         logging.exception(e)
         driver.quit()  # Закрываем драйвер
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
+    load_cookies(driver, COOKIES_PATH)
 
 def close_ad(driver):
     try:
