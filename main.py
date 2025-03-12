@@ -70,6 +70,21 @@ def create_driver():
     #     platform="Win32"
 
     # Добавляем заголовки через CDP
+def save_cookies(driver, cookies_path):
+    """Сохраняем куки в файл."""
+    with open(cookies_path, "w", encoding="utf-8") as file:
+        json.dump(driver.get_cookies(), file)
+    logging.info("Куки успешно сохранены.")
+
+def load_cookies(driver, cookies_path):
+    """Загружаем куки из файла."""
+    if os.path.exists(cookies_path):
+        with open(cookies_path, "r", encoding="utf-8") as file:
+            cookies = json.load(file)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        logging.info("Куки успешно загружены.")
+
 
 
 def login_to_umico(driver):
