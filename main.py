@@ -98,6 +98,18 @@ def login_to_umico(driver):
         logging.error("Ошибка: логин или пароль не найдены в .env")
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
+    # Если куки есть, загружаем их
+    load_cookies(driver, COOKIES_PATH)
+
+    # Переходим на страницу, чтобы проверить сессию
+    driver.get("https://business.umico.az/sign-in")
+    sleep(2)
+
+    # Если мы не на странице входа, значит, мы уже авторизованы
+    if check_if_logged_in(driver):
+        logging.info("Мы уже авторизованы.")
+        return
+
     logging.info("Открываем страницу авторизации Umico...")
     driver.get("https://business.umico.az/sign-in")
 
@@ -121,12 +133,12 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
+        save_cookies(driver, COOKIES_PATH)
     except Exception as e:
         logging.error("Ошибка входа!")
         logging.exception(e)
         driver.quit()  # Закрываем драйвер
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
-    load_cookies(driver, COOKIES_PATH)
 
 def close_ad(driver):
     try:
