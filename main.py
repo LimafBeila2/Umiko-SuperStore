@@ -217,9 +217,11 @@ def process_product(product, driver):
 
         # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
+        login_to_umico(driver)
+        sleep(10)
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
-        sleep(320)
+        sleep(5)
 
         # Проверяем, что мы на правильной странице
         try:
