@@ -232,7 +232,7 @@ def process_product(product, driver):
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
         sleep(5)
-
+        logging.info(f"Текущаяя страница: {edit_url}")
 
         # Находим кнопку "Готово" и нажимаем ее
         try:
