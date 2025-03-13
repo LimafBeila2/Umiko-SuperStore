@@ -27,41 +27,39 @@ CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
-    logging.info("🚀 Устанавливаем Google Chrome и ChromeDriver...")
-
-    # Устанавливаем Google Chrome вручную
-    os.system("curl -SL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o chrome.deb")
-    os.system("apt install ./chrome.deb -y")
+    logging.info("🚀 Создаем новый WebDriver...")
 
     # Автоматическая установка ChromeDriver
     chromedriver_autoinstaller.install()
-    logging.info("✅ Chrome и ChromeDriver установлены.")
+    logging.info("✅ ChromeDriver успешно установлен.")
 
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Без интерфейса
+    options.add_argument("--headless")  # Без интерфейса (если нужно)
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
 
-    # Указываем путь к Chrome вручную
-    service = Service("/usr/bin/google-chrome-stable")
-
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        'source': '''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Proxy;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Window;'''
+    driver = webdriver.Chrome(options=options)
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",{
+        'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Proxy;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Window;
+                    '''
     })
     logging.info("✅ WebDriver создан.")
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
+    # Открываем страницу логина
+
+
+    # Загружаем куки перед тем, как страница потребует авторизацию
 
     return driver
     # # Применяем stealth, чтобы скрыть использование Selenium
