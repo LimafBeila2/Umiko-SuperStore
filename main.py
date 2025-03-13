@@ -14,6 +14,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 import random
 import chromedriver_autoinstaller
 from selenium_stealth import stealth
+from selenium.webdriver.common.action_chains import ActionChains
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -248,7 +250,8 @@ def process_product(product, driver):
             sleep(1)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            save_button.click()
+            action = ActionChains(driver)
+            action.move_to_element(save_button).click().perform()
             logging.info("Кнопка 'Готово' была нажата.")
             sleep(10)
         except Exception as e:
