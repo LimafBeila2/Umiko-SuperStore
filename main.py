@@ -248,7 +248,7 @@ def process_product(product, driver):
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[span[normalize-space(text())='Готово'] or span[normalize-space(text())='Hazır']]"))
             )
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
