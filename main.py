@@ -70,22 +70,6 @@ def create_driver():
     #     platform="Win32"
 
     # Добавляем заголовки через CDP
-def save_cookies(driver, cookies_path):
-    """Сохраняем куки в файл."""
-    with open(cookies_path, "w", encoding="utf-8") as file:
-        json.dump(driver.get_cookies(), file)
-    logging.info("Куки успешно сохранены.")
-
-def load_cookies(driver, cookies_path):
-    """Загружаем куки из файла."""
-    if os.path.exists(cookies_path):
-        with open(cookies_path, "r", encoding="utf-8") as file:
-            cookies = json.load(file)
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-        logging.info("Куки успешно загружены.")
-
-
 
 def login_to_umico(driver):
     logging.info("Загружаем переменные окружения для авторизации...")
@@ -99,7 +83,6 @@ def login_to_umico(driver):
         raise ValueError("Ошибка: логин или пароль не найдены в .env")
 
     # Если куки есть, загружаем их
-    load_cookies(driver, COOKIES_PATH)
 
     # Переходим на страницу, чтобы проверить сессию
     driver.get("https://business.umico.az/sign-in")
@@ -133,7 +116,6 @@ def login_to_umico(driver):
         logging.info("Успешный вход в Umico Business!")
 
         # Сохраняем куки после успешного входа
-        save_cookies(driver, COOKIES_PATH)
     except Exception as e:
         logging.error("Ошибка входа!")
         logging.exception(e)
