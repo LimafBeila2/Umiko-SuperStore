@@ -245,6 +245,7 @@ def process_product(product, driver):
             sleep(1)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
+            driver.execute_script("arguments[0].scrollIntoView(true);", save_button)
             save_button.click()
             logging.info("Кнопка 'Готово' была нажата.")
         except Exception as e:
