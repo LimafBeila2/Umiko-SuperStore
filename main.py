@@ -243,13 +243,14 @@ def process_product(product, driver):
             login_to_umico(driver)  # Функция авторизации, если не на нужной странице
             driver.get(edit_url)  # Переходим снова на страницу редактирования
             logging.info(f"Повторно открыта страница изменения цены: {edit_url}")
-            sleep(2)
+        sleep(2)
 
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[normalize-space(text())='Готово'] or span[normalize-space(text())='Hazır']]"))
             )
+            sleep(2)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             sleep(5)
