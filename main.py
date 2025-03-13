@@ -233,29 +233,36 @@ def process_product(product, driver):
         logging.info(f"Открыта страница изменения цены: {edit_url}")
         sleep(5)
         current_url = driver.current_url
-        logging.info(f"Открыта страница изменения цены: {current_url}")
+        logging.info(f"Мы на текущей странице: {current_url}")
         check_if_logged_in(driver)
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-            )
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[span[normalize-space(text())='Готово'] or span[normalize-space(text())='Hazır']]"))
+                )
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            sleep(1)
-            current_url = driver.current_url
-            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            driver.execute_script("arguments[0].scrollIntoView(true);", save_button)
-            save_button.click()
-            logging.info("Кнопка 'Готово' была нажата.")
-        except Exception as e:
-            current_url = driver.current_url
-            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
-            logging.error(f"Текущий URL: {current_url}")
 
-    except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
+            # Прокрутка к кнопке, чтобы убедиться, что она видна
+            driver.execute_script("arguments[0].scrollIntoView(true);", save_button)
+            sleep(1)
+
+    # Попытка клика через JavaScript, если обычный click не срабатывает
+            try:
+                save_button.click()
+            except Exception as click_error:
+                logging.warning(f"Обычный click не сработал, пробуем JavaScript click: {click_error}")
+                driver.execute_script("arguments[0].click();", save_button)
+
+                logging.info("Кнопка 'Готово' была нажата.")
+            except Exception as e:
+                current_url = driver.current_url
+                logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
+                logging.error(f"Текущий URL: {current_url}")
+
+        except Exception as e:
+            logging.exception(f"Ошибка при обработке товара: {e}")
 
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
