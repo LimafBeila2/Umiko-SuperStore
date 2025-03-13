@@ -38,7 +38,7 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Без интерфейса (если нужно)
+    # options.add_argument("--headless")  # Без интерфейса (если нужно)
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
@@ -95,14 +95,14 @@ def login_to_umico(driver):
 
     logging.info("Открываем страницу авторизации Umico...")
     driver.get("https://business.umico.az/sign-in")
-
+    sleep(1)
     # Ожидаем, пока появится поле для ввода логина
     login_input = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='İstifadəçi adı daxil edin']"))
     )
     login_input.send_keys(username)  # Вводим логин
     logging.info(f"Логин '{username}' введен.")
-
+    sleep(1)
     # Находим поле для ввода пароля и отправляем его
     password_input = driver.find_element(By.XPATH, "//input[@placeholder='Şifrəni daxil edin']")
     password_input.send_keys(password)  # Вводим пароль
@@ -228,32 +228,20 @@ def process_product(product, driver):
         # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
         login_to_umico(driver)
-        sleep(10)
+        sleep(5)
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
         sleep(5)
 
-        # Проверяем, что мы на правильной странице
-        try:
-            WebDriverWait(driver, 10).until(EC.url_contains("edit"))  # или другой нужный путь
-            logging.info("Мы на правильной странице.")
-        except Exception as e:
-            logging.error(f"Не на правильной странице. Текущий URL: {driver.current_url}")
-            # Если мы не на нужной странице, повторно авторизуемся
-            login_to_umico(driver)  # Функция авторизации, если не на нужной странице
-            driver.get(edit_url)  # Переходим снова на страницу редактирования
-            logging.info(f"Повторно открыта страница изменения цены: {edit_url}")
-        sleep(2)
 
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[span[normalize-space(text())='Готово'] or span[normalize-space(text())='Hazır']]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
             )
-            sleep(2)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            sleep(5)
+            sleep(1)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             save_button.click()
