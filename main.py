@@ -253,6 +253,8 @@ def process_product(product, driver):
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             sleep(5)
+            current_url = driver.current_url
+            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             save_button.click()
             logging.info("Кнопка 'Готово' была нажата.")
             sleep(2)
