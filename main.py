@@ -275,6 +275,7 @@ def process_product(product, driver):
             sleep(2)
         except Exception as e:
             current_url = driver.current_url
+            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
             logging.error(f"Текущий URL: {current_url}")
 
