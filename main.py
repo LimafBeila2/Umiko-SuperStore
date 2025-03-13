@@ -250,6 +250,7 @@ def process_product(product, driver):
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             save_button.click()
             logging.info("Кнопка 'Готово' была нажата.")
+            sleep(10)
         except Exception as e:
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
