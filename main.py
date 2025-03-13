@@ -234,7 +234,7 @@ def process_product(product, driver):
         sleep(5)
         current_url = driver.current_url
         logging.info(f"Открыта страница изменения цены: {current_url}")
-
+        check_if_logged_in(driver)
         # Находим кнопку "Готово" и нажимаем ее
         try:
             save_button = WebDriverWait(driver, 30).until(
