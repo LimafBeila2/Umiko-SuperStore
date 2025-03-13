@@ -38,7 +38,7 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
-    options.add_argument("--headless")  # Без интерфейса (если нужно)
+    # options.add_argument("--headless")  # Без интерфейса (если нужно)
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
@@ -237,27 +237,22 @@ def process_product(product, driver):
         check_if_logged_in(driver)
         # Находим кнопку "Готово" и нажимаем ее
         try:
-            save_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//button[span[normalize-space(text())='Готово'] or span[normalize-space(text())='Hazır']]"))
-            )
+            sleep(3)
+            current_url = driver.current_url
+            logging.info(f"Мы на текущей странице 2: {current_url}")
+            check_if_logged_in(driver)
+            save_button = WebDriverWait(driver, 60).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")))
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-
-            # Прокрутка к кнопке, чтобы убедиться, что она видна
-            driver.execute_script("arguments[0].scrollIntoView(true);", save_button)
             sleep(1)
-
-    # Попытка клика через JavaScript, если обычный click не срабатывает
-            try:
-                save_button.click()
-            except Exception as click_error:
-                logging.warning(f"Обычный click не сработал, пробуем JavaScript click: {click_error}")
-                driver.execute_script("arguments[0].click();", save_button)
-
-                logging.info("Кнопка 'Готово' была нажата.")
+            current_url = driver.current_url
+            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
+            save_button.click()
+            logging.info("Кнопка 'Готово' была нажата.")
         except Exception as e:
             current_url = driver.current_url
+            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
             logging.error(f"Текущий URL: {current_url}")
 
