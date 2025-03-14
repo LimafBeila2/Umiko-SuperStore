@@ -249,8 +249,11 @@ def process_product(product, driver):
 
         try:
             check_javascript_loaded(driver)
-            page_source = driver.page_source
-            logging.info("Небольшой фрагмент исходного кода страницы:\n" + page_source[:10000])
+            button = driver.find_element(By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]")
+            if button.is_displayed() and button.is_enabled():
+                logging.info("Кнопка доступна для клика.")
+            else:
+                logging.error("Кнопка не доступна для клика.")
             sleep(3)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
