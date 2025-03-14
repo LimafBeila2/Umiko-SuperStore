@@ -246,7 +246,10 @@ def process_product(product, driver):
         except Exception as e:
             logging.error(f"Ошибка при ожидании загрузки страницы: {e}")
             return
+
         try:
+            page_source = driver.page_source
+            logging.info("Небольшой фрагмент исходного кода страницы:\n" + page_source[:1000])
             sleep(3)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
