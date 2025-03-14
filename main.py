@@ -254,7 +254,12 @@ def process_product(product, driver):
                 logging.info("Кнопка доступна для клика.")
             else:
                 logging.error("Кнопка не доступна для клика.")
+
             sleep(3)
+            all_buttons = driver.find_elements(By.TAG_NAME, "button")
+            for btn in all_buttons:
+                logging.info(f"Найденная кнопка: {btn.get_attribute('outerHTML')}")
+            sleep(5)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
             check_if_logged_in(driver)
