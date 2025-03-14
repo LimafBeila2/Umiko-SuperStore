@@ -239,6 +239,14 @@ def process_product(product, driver):
         check_if_logged_in(driver)
         # Находим кнопку "Готово" и нажимаем ее
         try:
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.TAG_NAME, 'body'))  # Ожидаем загрузки тега body
+            )
+            logging.info("Страница полностью загружена.")
+        except Exception as e:
+            logging.error(f"Ошибка при ожидании загрузки страницы: {e}")
+            return
+        try:
             sleep(3)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
@@ -250,8 +258,7 @@ def process_product(product, driver):
             sleep(1)
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            action = ActionChains(driver)
-            action.move_to_element(save_button).click().perform()
+            save_button.click()
             logging.info("Кнопка 'Готово' была нажата.")
             sleep(10)
         except Exception as e:
