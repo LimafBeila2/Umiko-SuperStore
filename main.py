@@ -248,8 +248,9 @@ def process_product(product, driver):
             return
 
         try:
+            check_javascript_loaded(driver)
             page_source = driver.page_source
-            logging.info("Небольшой фрагмент исходного кода страницы:\n" + page_source[:1000])
+            logging.info("Небольшой фрагмент исходного кода страницы:\n" + page_source[:10000])
             sleep(3)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
@@ -272,6 +273,16 @@ def process_product(product, driver):
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
+
+def check_javascript_loaded(driver):
+    try:
+        # Ждем, пока не исчезнут индикаторы загрузки, если они есть
+        WebDriverWait(driver, 30).until(
+            EC.invisibility_of_element_located((By.CLASS_NAME, "loading-indicator"))  # Поменяйте на свой индикатор
+        )
+        logging.info("JavaScript загрузка завершена.")
+    except Exception as e:
+        logging.error(f"Ошибка при ожидании загрузки JavaScript: {e}")
 
 def load_json(json_file):
     logging.info(f"Загружаем товары из файла {json_file}...")
