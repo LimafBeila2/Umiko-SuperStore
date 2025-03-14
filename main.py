@@ -51,10 +51,6 @@ def create_driver():
         'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
                     delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Proxy;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Window;
                     '''
     })
     logging.info("✅ WebDriver создан.")
