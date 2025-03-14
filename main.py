@@ -264,7 +264,7 @@ def process_product(product, driver):
             logging.info(f"Мы на текущей странице 2: {current_url}")
             check_if_logged_in(driver)
             save_button = WebDriverWait(driver, 60).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Готово') or contains(text(), 'Hazır')]")))
+                 EC.element_to_be_clickable((By.XPATH,  "//button[.//span[contains(text(), 'Hazır')]]")))
             current_url = driver.current_url
             logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
             sleep(1)
