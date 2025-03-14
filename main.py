@@ -47,12 +47,12 @@ def create_driver():
     options.add_experimental_option('useAutomationExtension', False)
 
     driver = webdriver.Chrome(options=options)
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",{
-        'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
-                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
-                    '''
-    })
+    # driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",{
+    #     'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+    #                 delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
+    #                 delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
+    #                 '''
+    # })
     logging.info("✅ WebDriver создан.")
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
     # Открываем страницу логина
