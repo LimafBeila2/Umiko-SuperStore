@@ -25,7 +25,6 @@ headers = {
 }
 
 # Папка для хранения профиля в контейнере Railway
-CHROME_PROFILE_PATH = "/tmp/chrome_profile"
 COOKIES_PATH = "/tmp/cookies.json"  # Путь для хранения куки
 
 def create_driver():
@@ -39,7 +38,6 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920x1080")
-    options.add_argument(f"--user-data-dir={CHROME_PROFILE_PATH}")  # Путь к профилю
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -47,12 +45,16 @@ def create_driver():
     options.add_experimental_option('useAutomationExtension', False)
 
     driver = webdriver.Chrome(options=options)
-    # driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",{
-    #     'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-    #                 delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
-    #                 delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
-    #                 '''
-    # })
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",{
+        'source':'''delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Proxy;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+                    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Window;
+                    '''
+    })
     logging.info("✅ WebDriver создан.")
     driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": headers})
     # Открываем страницу логина
@@ -249,13 +251,6 @@ def process_product(product, driver):
             all_buttons = driver.find_elements(By.TAG_NAME, "button")
             for btn in all_buttons:
                 logging.info(f"Найденная кнопка: {btn.get_attribute('outerHTML')}")
-                image_element = WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((By.XPATH, "//img[@src='https://strgimgr.umico.az/sized/1680/339754-1e8e2aff1a4ae183fc4080047729fab8.jpg']"))
-                    )
-                if image_element.is_displayed():
-                    logging.info(f"изображение не найдено")
-                else:
-                    logging.info(f"изображение не найдено")
             sleep(5)
             current_url = driver.current_url
             logging.info(f"Мы на текущей странице 2: {current_url}")
