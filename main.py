@@ -249,6 +249,16 @@ def process_product(product, driver):
             return
 
         try:
+            sleep(5)
+            image_element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, "//img[@src='https://strgimgr.umico.az/sized/1680/339754-1e8e2aff1a4ae183fc4080047729fab8.jpg']"))
+                )
+
+            # Проверим, виден ли элемент
+            if image_element.is_displayed():
+                logging.info(f"изображение найдено")
+            else:
+                logging.info(f"изображение не найдено")
             sleep(15)
             all_buttons = driver.find_elements(By.TAG_NAME, "button")
             for btn in all_buttons:
