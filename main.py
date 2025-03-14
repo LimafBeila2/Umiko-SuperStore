@@ -249,6 +249,7 @@ def process_product(product, driver):
             return
 
         try:
+            sleep(15)
             all_buttons = driver.find_elements(By.TAG_NAME, "button")
             for btn in all_buttons:
                 logging.info(f"Найденная кнопка: {btn.get_attribute('outerHTML')}")
