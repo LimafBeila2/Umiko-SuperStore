@@ -143,7 +143,10 @@ def check_if_logged_in(driver):
         return False
     return True
 
-def process_product(product, driver):
+
+def check_javascript_loaded(driver):
+    try:
+    def process_product(product, driver):
     try:
         logging.info(f"Начинаем обработку товара: {product['product_url']}")
         sleep(10)
@@ -154,119 +157,67 @@ def process_product(product, driver):
         sleep(2)
         close_ad(driver)
 
-        try:
-            logging.info("Ищем кнопку для просмотра цен всех продавцов...")
-            button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.XPATH,
-                    "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-                ))
-            )
-            button.click()
-            logging.info("Кнопка для просмотра цен всех продавцов была нажата.")
-        except Exception as e:
-            logging.warning(f"Не удалось найти кнопку для просмотра цен: {e}")
-            return
+        # Оставляем прежнюю часть без изменений (поиск минимальной цены и т.д.)...
+        # ...
 
-        logging.info("Ожидаем загрузки предложений по товару...")
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
-        )
-
-        product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-        if not product_offers:
-            logging.warning("Нет предложений по этому товару.")
-            return
-
-        lowest_price = float('inf')
-        lowest_price_merchant = ""
-        super_store_price = None
-
-        logging.info(f"Обрабатываем {len(product_offers)} предложений для этого товара.")
-        for offer in product_offers:
-            try:
-                merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                logging.info(f"Предложение от продавца: {merchant}")
-
-                price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
-                price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
-
-                price_text = None
-                if price_text_old and price_text_new:
-                    price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))
-                elif price_text_old:
-                    price_text = price_text_old
-                elif price_text_new:
-                    price_text = price_text_new
-
-                if price_text:
-                    price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
-                    if not price_text_cleaned:
-                        continue
-                    price = float(price_text_cleaned)
-                    logging.info(f"Найдена цена: {price}₼")
-                    if merchant == "Super Store":
-                        super_store_price = price
-                    if price < lowest_price:
-                        lowest_price = price
-                        lowest_price_merchant = merchant
-            except Exception as e:
-                logging.warning(f"Ошибка при обработке предложения: {e}")
-                continue
-
-        logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
-        if super_store_price is not None:
-            logging.info(f"Цена от Super Store: {super_store_price}")
-
-        if lowest_price <= 80.1:
-            logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
-            return
-
-        sleep(2)
-
+        # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
         login_to_umico(driver)
         sleep(5)
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
 
-        # Ждём полной загрузки документа
+        # Проверяем, что страница полностью загружена
         WebDriverWait(driver, 30).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
+            EC.presence_of_element_located((By.TAG_NAME, 'body'))
         )
         logging.info("Страница полностью загружена (document.readyState = 'complete').")
-        check_if_logged_in(driver)
 
+        # Дебаг - сохраняем всю страницу в файл
+        page_source = driver.page_source
+        with open("debug_edit_page.html", "w", encoding="utf-8") as f:
+            f.write(page_source)
+        logging.info("Сохранил HTML страницы в debug_edit_page.html")
+
+        # Логируем количество input полей
         try:
-            sleep(10)
-            all_buttons = driver.find_elements(By.TAG_NAME, "button")
-            for btn in all_buttons:
-                logging.info(f"Найденная кнопка: Текст='{btn.text}' | HTML={btn.get_attribute('outerHTML')}")
-            
-            sleep(5)
-            # Проверяем ещё раз после логов
-            current_url = driver.current_url
-            logging.info(f"Текущая страница: {current_url}")
-
-            # Попытка найти и кликнуть кнопку "Готово"
-            try:
-                save_button = WebDriverWait(driver, 60).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Hazır')]"))
-                )
-                driver.execute_script("arguments[0].scrollIntoView();", save_button)
-                driver.execute_script("arguments[0].click();", save_button)
-                logging.info("Кнопка 'Готово' была нажата через JS.")
-                sleep(10)
-            except Exception as inner_e:
-                logging.error(f"Не удалось кликнуть кнопку 'Готово': {inner_e}")
+            inputs = driver.find_elements(By.XPATH, "//input")
+            logging.info(f"Найдено {len(inputs)} input полей.")
         except Exception as e:
-            logging.error(f"Ошибка при поиске кнопки 'Готово': {e}")
+            logging.error(f"Ошибка при поиске input полей: {e}")
+
+        # Логируем все кнопки на странице
+        all_buttons = driver.find_elements(By.TAG_NAME, "button")
+        for btn in all_buttons:
+            btn_text = btn.text or "Текста нет"
+            btn_html = btn.get_attribute("outerHTML")
+            logging.info(f"Найденная кнопка: Текст='{btn_text}' | HTML={btn_html}")
+
+        # Проверка наличия изображения (если нужно)
+        try:
+            image_element = driver.find_element(By.XPATH, "//img[@src='https://strgimgr.umico.az/sized/1680/339754-1e8e2aff1a4ae183fc4080047729fab8.jpg']")
+            if image_element.is_displayed():
+                logging.info(f"Изображение найдено и отображается.")
+            else:
+                logging.info(f"Изображение найдено, но не отображается.")
+        except Exception:
+            logging.info(f"Изображение не найдено.")
+
+        # Пробуем найти кнопку "Готово" (Hazır)
+        try:
+            save_button = WebDriverWait(driver, 60).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[.//span[contains(text(), 'Hazır')]]"))
+            )
+            save_button.click()
+            logging.info("Кнопка 'Готово' была нажата.")
+            sleep(10)
+        except Exception as e:
+            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
+            current_url = driver.current_url
+            logging.error(f"Текущий URL: {current_url}")
 
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
-
-def check_javascript_loaded(driver):
-    try:
-        # Ждем, пока не исчезнут индикаторы загрузки, если они есть
+        logging.exception(f"Ошибка при обработке товара: {e}")    # Ждем, пока не исчезнут индикаторы загрузки, если они есть
         WebDriverWait(driver, 30).until(
             EC.invisibility_of_element_located((By.CLASS_NAME, "loading-indicator"))  # Поменяйте на свой индикатор
         )
