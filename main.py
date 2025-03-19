@@ -190,16 +190,14 @@ def process_product(product, driver):
                 price_text_old = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-old']") else None
                 price_text_new = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-new']").text.strip() if offer.find_elements(By.XPATH, ".//span[@data-info='item-desc-price-new']") else None
 
-                # Выбираем минимальную цену, если оба атрибута найдены
                 price_text = None
                 if price_text_old and price_text_new:
-                    price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))  # Убираем пробелы
+                    price_text = min(price_text_old, price_text_new, key=lambda x: float(x.replace("₼", "").replace(" ", "").strip()))
                 elif price_text_old:
                     price_text = price_text_old
                 elif price_text_new:
                     price_text = price_text_new
 
-                # Если цена найдена, очищаем и конвертируем её в число
                 if price_text:
                     price_text_cleaned = price_text.replace("₼", "").replace(" ", "").strip()
                     if not price_text_cleaned:
@@ -219,57 +217,49 @@ def process_product(product, driver):
         if super_store_price is not None:
             logging.info(f"Цена от Super Store: {super_store_price}")
 
-        # Проверяем, если цена товара меньше или равна 80.1, то пропускаем
         if lowest_price <= 80.1:
             logging.info(f"Самая низкая цена ({lowest_price}₼) равна или меньше 80.1, пропускаем товар.")
             return
 
         sleep(2)
 
-        # Переходим на страницу редактирования товара
         logging.info("Открываем страницу изменения цены...")
         login_to_umico(driver)
         sleep(5)
         driver.get(edit_url)
         logging.info(f"Открыта страница изменения цены: {edit_url}")
-        sleep(5)
-        current_url = driver.current_url
-        logging.info(f"Мы на текущей странице: {current_url}")
+
+        # Ждём полной загрузки документа
+        WebDriverWait(driver, 30).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
+        logging.info("Страница полностью загружена (document.readyState = 'complete').")
         check_if_logged_in(driver)
-        # Находим кнопку "Готово" и нажимаем ее
-        try:
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.TAG_NAME, 'body'))  # Ожидаем загрузки тега body
-            )
-            logging.info("Страница полностью загружена.")
-        except Exception as e:
-            logging.error(f"Ошибка при ожидании загрузки страницы: {e}")
-            return
 
         try:
-            sleep(15)
+            sleep(10)
             all_buttons = driver.find_elements(By.TAG_NAME, "button")
             for btn in all_buttons:
-                logging.info(f"Найденная кнопка: {btn.get_attribute('outerHTML')}")
+                logging.info(f"Найденная кнопка: Текст='{btn.text}' | HTML={btn.get_attribute('outerHTML')}")
+            
             sleep(5)
+            # Проверяем ещё раз после логов
             current_url = driver.current_url
-            logging.info(f"Мы на текущей странице 2: {current_url}")
-            check_if_logged_in(driver)
-            save_button = WebDriverWait(driver, 60).until(
-                 EC.element_to_be_clickable((By.XPATH,  "//button[.//span[contains(text(), 'Hazır')]]")))
-            current_url = driver.current_url
-            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            sleep(1)
-            current_url = driver.current_url
-            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            save_button.click()
-            logging.info("Кнопка 'Готово' была нажата.")
-            sleep(10)
+            logging.info(f"Текущая страница: {current_url}")
+
+            # Попытка найти и кликнуть кнопку "Готово"
+            try:
+                save_button = WebDriverWait(driver, 60).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Hazır')]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView();", save_button)
+                driver.execute_script("arguments[0].click();", save_button)
+                logging.info("Кнопка 'Готово' была нажата через JS.")
+                sleep(10)
+            except Exception as inner_e:
+                logging.error(f"Не удалось кликнуть кнопку 'Готово': {inner_e}")
         except Exception as e:
-            current_url = driver.current_url
-            logging.info(f"Текущая страница перед нажатием кнопки: {current_url}")
-            logging.error(f"Ошибка при нажатии кнопки 'Готово': {e}")
-            logging.error(f"Текущий URL: {current_url}")
+            logging.error(f"Ошибка при поиске кнопки 'Готово': {e}")
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
